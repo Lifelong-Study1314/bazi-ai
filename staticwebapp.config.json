@@ -1,15 +1,12 @@
 {
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/api/*", "*.{css,scss,gif,ico,jpg,jpeg,png,js,svg,woff,woff2,ttf,eot}"]
+  },
   "routes": [
     {
       "route": "/api/*",
-      "allowedRoles": ["anonymous"],
-      "rewrite": "http://172.185.91.236:8000/api/*",
-      "methods": ["POST", "GET", "PUT", "DELETE", "PATCH"]
-    },
-    {
-      "route": "/*",
-      "serve": "/index.html",
-      "statusCode": 200
+      "allowedRoles": ["anonymous"]
     }
   ]
 }
