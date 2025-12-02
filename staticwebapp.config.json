@@ -3,7 +3,8 @@
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"],
-      "rewrite": "http://172.185.91.236:8000/*"
+      "rewrite": "http://172.185.91.236:8000/api/*",
+      "methods": ["POST", "GET", "PUT", "DELETE", "PATCH"]
     },
     {
       "route": "/*",
