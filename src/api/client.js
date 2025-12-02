@@ -17,7 +17,7 @@ const apiClient = axios.create({
  */
 export const checkHealth = async () => {
   try {
-    const response = await apiClient.get('/api/health')
+    const response = await apiClient.get('/health')  // ← Remove /api
     return response.data
   } catch (error) {
     throw new Error(`Health check failed: ${error.message}`)
@@ -29,7 +29,7 @@ export const checkHealth = async () => {
  */
 export const getBaziChart = async (birthDate, birthHour, gender, language = 'en') => {
   try {
-    const response = await apiClient.post('/api/bazi-chart', {
+    const response = await apiClient.post('/bazi-chart', {  // ← Remove /api
       birth_date: birthDate,
       birth_hour: birthHour,
       gender: gender,
@@ -43,20 +43,6 @@ export const getBaziChart = async (birthDate, birthHour, gender, language = 'en'
 
 /**
  * Stream BAZI analysis with AI insights using fetch + ReadableStream
- * 
- * This replaces EventSource because:
- * 1. We need to send POST request (EventSource only does GET)
- * 2. Fetch API has better control over streaming
- * 3. Works better with CORS and headers
- * 
- * Usage:
- * const controller = await streamBaziAnalysis(
- *   '1990-05-15', 14, 'male', 'en',
- *   (data) => console.log('Received:', data),
- *   (error) => console.error('Error:', error)
- * )
- * 
- * Returns AbortController, call controller.abort() to stop
  */
 export const streamBaziAnalysis = async (
   birthDate, 
@@ -69,7 +55,6 @@ export const streamBaziAnalysis = async (
   const controller = new AbortController()
   
   try {
-    // Prepare request body
     const payload = {
       birth_date: birthDate,
       birth_hour: birthHour,
@@ -77,11 +62,10 @@ export const streamBaziAnalysis = async (
       language: language
     }
 
-    // Make fetch request with streaming
     const response = await fetch(
-      `${API_BASE_URL}/api/analyze`,
+      `${API_BASE_URL}/analyze`,  // ← Remove /api
       {
-        method: 'POST',  // ← KEY FIX: Use POST instead of GET
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -94,7 +78,6 @@ export const streamBaziAnalysis = async (
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    // Read streaming response
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let buffer = ''
@@ -104,25 +87,18 @@ export const streamBaziAnalysis = async (
       
       if (done) break
       
-      // Decode chunk
       buffer += decoder.decode(value, { stream: true })
       
-      // Parse Server-Sent Events format
       const lines = buffer.split('\n')
-      
-      // Keep last incomplete line in buffer
       buffer = lines[lines.length - 1]
       
-      // Process complete lines
       for (let i = 0; i < lines.length - 1; i++) {
         const line = lines[i].trim()
         
-        // Skip empty lines
         if (!line) continue
         
-        // Parse SSE format: "data: {json}"
         if (line.startsWith('data: ')) {
-          const jsonStr = line.substring(6)  // Remove "data: " prefix
+          const jsonStr = line.substring(6)
           
           try {
             const data = JSON.parse(jsonStr)
