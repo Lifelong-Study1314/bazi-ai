@@ -1,9 +1,12 @@
 import React, { useEffect, useRef } from 'react'
 import Markdown from 'react-markdown'
 import EnhancedInsightDisplay from './EnhancedInsightDisplay';
+import ElementChart from './ElementChart';  // ← NEW
+
 
 export const ResultsDisplay = ({ baziChart, insights, language }) => {
   const insightsRef = useRef(null)
+
 
   // Auto-scroll as new insights arrive
   useEffect(() => {
@@ -12,9 +15,12 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     }
   }, [insights])
 
+
   if (!baziChart) return null
 
+
   const { four_pillars, day_master, elements } = baziChart
+
 
   const titles = {
     en: {
@@ -40,7 +46,9 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     }
   }
 
+
   const labels = titles[language] || titles.en
+
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -49,6 +57,7 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
         <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-3 border-b-2 border-purple-600">
           {labels.chart}
         </h2>
+
 
         {/* Four Pillars */}
         <div className="mb-6">
@@ -75,6 +84,7 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
           </div>
         </div>
 
+
         {/* Day Master */}
         <div className="mb-6 bg-blue-50 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-700 mb-2">{labels.dayMaster}</h3>
@@ -87,9 +97,17 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
           </div>
         </div>
 
-        {/* Elements */}
+
+        {/* Elements - UPDATED */}
         <div className="bg-orange-50 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-gray-700 mb-3">{labels.elements}</h3>
+          
+          {/* NEW: Add the chart here */}
+          <div className="mb-6 bg-white rounded-lg p-4">
+            <ElementChart elements={elements} />
+          </div>
+          
+          {/* Keep existing elements display */}
           <div className="grid grid-cols-5 gap-2 mb-4">
             {Object.entries(elements.counts).map(([elem, count]) => {
               const colors = {
@@ -114,12 +132,14 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
         </div>
       </div>
 
-      {/* Insights Card - UPDATED */}
+
+      {/* Insights Card */}
       {insights && (
         <EnhancedInsightDisplay insights={insights} />
       )}
     </div>
   )
 }
+
 
 export default ResultsDisplay
