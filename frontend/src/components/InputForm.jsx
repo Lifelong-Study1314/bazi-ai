@@ -40,7 +40,6 @@ export const InputForm = ({ onSubmit, loading, language }) => {
       ...prev,
       [name]: value
     }))
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
@@ -56,8 +55,7 @@ export const InputForm = ({ onSubmit, loading, language }) => {
     const errorMessages = {
       en: { date: 'Please select your birth date', hour: 'Please select your birth hour' },
       'zh-TW': { date: '請選擇出生日期', hour: '請選擇出生時辰' },
-      'zh-CN': { date: '请选择出生日期', hour: '请选择出生时辰' },
-      'ko': { date: '출생 날짜를 선택해주세요', hour: '출생 시간을 선택해주세요' }
+      'zh-CN': { date: '请选择出生日期', hour: '请选择出生时辰' }
     }
     
     const msgs = errorMessages[language] || errorMessages.en
@@ -89,8 +87,7 @@ export const InputForm = ({ onSubmit, loading, language }) => {
   const labelText = {
     en: { date: 'Birth Date', time: 'Birth Time', gender: 'Gender', submit: 'Analyze My BAZI' },
     'zh-TW': { date: '出生日期', time: '出生時辰', gender: '性別', submit: '計算八字' },
-    'zh-CN': { date: '出生日期', time: '出生时辰', gender: '性别', submit: '计算八字' },
-    'ko': { date: '출생 날짜', time: '출생 시간', gender: '성별', submit: '내 사주 분석' }
+    'zh-CN': { date: '出生日期', time: '出生时辰', gender: '性别', submit: '计算八字' }
   }
 
 
