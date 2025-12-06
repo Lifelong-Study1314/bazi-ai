@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import './EnhancedInsightDisplay.css';
 
 
+
 export const EnhancedInsightDisplay = ({ insights }) => {
   const [sections, setSections] = useState([]);
+
 
 
   useEffect(() => {
@@ -11,6 +13,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       setSections([]);
       return;
     }
+
 
 
     try {
@@ -29,6 +32,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       }
 
 
+
       // Now split by ### markers
       const parts = insights.split(/###\s+/);
       
@@ -38,6 +42,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         if (!section || !section.trim || section.trim().length === 0) continue;
         const lines = section.split('\n');
         if (!lines || lines.length === 0) continue;
+
 
 
         // First line should have number and title like "1. Chart Structure & Strength Analysis"
@@ -51,6 +56,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         const content = lines.slice(1).join('\n').trim();
 
 
+
         if (title && content) {
           parsedSections.push({
             type: 'section',
@@ -59,6 +65,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
           });
         }
       }
+
 
 
       setSections(parsedSections);
@@ -73,6 +80,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       ]);
     }
   }, [insights]);
+
 
 
   const getSectionIcon = (title) => {
@@ -125,6 +133,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
   };
 
 
+
   const getSectionColor = (index) => {
     const colors = [
       'section-blue',
@@ -139,6 +148,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
   };
 
 
+
   if (sections.length === 0) {
     return (
       <div className="enhanced-insights-container">
@@ -150,12 +160,14 @@ export const EnhancedInsightDisplay = ({ insights }) => {
   }
 
 
+
   return (
     <div className="enhanced-insights-container">
       <div className="insights-header">
         <h2>✨ Your BAZI Destiny Analysis</h2>
         <p className="insights-subtitle">A comprehensive reading of your life chart</p>
       </div>
+
 
 
       <div className="sections-wrapper">
@@ -170,6 +182,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
               <span className="section-icon">{getSectionIcon(section.title)}</span>
               <h3>{section.title}</h3>
             </div>
+
 
 
             <div className="section-content">
@@ -187,6 +200,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 };
 
 
+
 // Helper to format content
 const FormattedContent = ({ content }) => {
   if (!content || typeof content !== 'string') {
@@ -194,7 +208,9 @@ const FormattedContent = ({ content }) => {
   }
 
 
+
   const lines = content.split('\n');
+
 
 
   return (
@@ -202,6 +218,7 @@ const FormattedContent = ({ content }) => {
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (!trimmed) return null;
+
 
 
         // Bold text (between **)
@@ -216,20 +233,26 @@ const FormattedContent = ({ content }) => {
         }
 
 
-        // Bullet points
-        if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+
+        // ✅ IMPROVED: Bullet points with more flexible regex
+        // Matches: "- text", "* text", "• text" with or without spaces
+        if (/^[-*•]\s*/.test(trimmed)) {
+          // Remove the bullet character and optional whitespace
+          const bulletText = trimmed.replace(/^[-*•]\s*/, '');
           return (
             <div key={i} className="bullet-point">
-              • {trimmed.replace(/^(\*|-|•)\s*/, '')}
+              • {bulletText}
             </div>
           );
         }
+
 
 
         // Section separators
         if (trimmed === '---' || trimmed === '***') {
           return <div key={i} className="section-divider" />;
         }
+
 
 
         // Regular paragraph
@@ -242,6 +265,7 @@ const FormattedContent = ({ content }) => {
     </div>
   );
 };
+
 
 
 export default EnhancedInsightDisplay;
