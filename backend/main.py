@@ -10,23 +10,25 @@ Routes:
 import json
 import logging
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi.responses import JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import AnalyzeRequest  # ← ADD THIS LINE
+from models import AnalyzeRequest
 from pydantic import BaseModel
 from typing import Optional
 from bazi_engine.calculator import calculate_bazi
 from ai_insights.generator import generate_insights_generator
 from config import get_settings
 
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # Get settings
 settings = get_settings()
+
 
 # Create FastAPI app
 app = FastAPI(
@@ -34,6 +36,7 @@ app = FastAPI(
     version=settings.version,
     description="BAZI AI Analysis - AI-powered Chinese metaphysics analysis",
 )
+
 
 # Configure CORS
 app.add_middleware(
@@ -52,7 +55,7 @@ class BaziAnalysisRequest(BaseModel):
     birth_date: str  # Format: "YYYY-MM-DD"
     birth_hour: int  # 0-23
     gender: str      # "male" or "female"
-    language: Optional[str] = "en"  # "en", "zh-TW", "zh-CN"
+    language: Optional[str] = "en"  # "en", "zh-TW", "zh-CN", "ko"
 
 
 class BaziChartResponse(BaseModel):
@@ -80,18 +83,31 @@ async def health_check():
 async def stream_insights(request: AnalyzeRequest):
     """Stream BAZI insights"""
     try:
-        logging.info(f"Analyze request: {request.birth_date}, {request.birth_hour}")
+        # CRITICAL LOGGING
+        logger.info("=" * 60)
+        logger.info("🔵 INCOMING REQUEST")
+        logger.info("=" * 60)
+        logger.info(f"birth_date: {request.birth_date}")
+        logger.info(f"birth_hour: {request.birth_hour}")
+        logger.info(f"gender: {request.gender}")
+        logger.info(f"language: {request.language}")
+        logger.info(f"language type: {type(request.language)}")
+        logger.info(f"language is None: {request.language is None}")
+        logger.info(f"language == 'ko': {request.language == 'ko'}")
+        logger.info("=" * 60)
         
         # Calculate BAZI chart
-        bazi_data = calculate_bazi(  # ✅ Your existing function
+        bazi_data = calculate_bazi(
             request.birth_date,
             request.birth_hour,
             request.gender
         )
         
-        logging.info(f"BAZI calculation successful")
-        logging.info(f"Request language parameter: {request.language}")
-        logging.info(f"Request data: birth_date={request.birth_date}, hour={request.birth_hour}, gender={request.gender}, language={request.language}")
+        logger.info(f"✅ BAZI calculation successful")
+        
+        # Get language, default to "en"
+        language = request.language if request.language else "en"
+        logger.info(f"🌍 Using language: {language}")
         
         # Create generator
         async def stream_insights_gen():
@@ -101,28 +117,35 @@ async def stream_insights(request: AnalyzeRequest):
                     'type': 'bazi_chart',
                     'data': bazi_data
                 }
-                logging.debug(f"Sending BAZI chart: {json.dumps(chart_message)[:100]}...")
+                logger.debug(f"Sending BAZI chart...")
                 yield f"data: {json.dumps(chart_message)}\n\n"
                 
                 # Then stream insights
+                logger.info(f"🚀 Starting insights generation with language={language}")
                 chunk_count = 0
-                async for chunk in generate_insights_generator(bazi_data, request.language):
+                
+                async for chunk in generate_insights_generator(bazi_data, language):
                     chunk_count += 1
                     insight_message = {
                         'type': 'insight',
                         'text': chunk
                     }
-                    logging.debug(f"Sending insight chunk {chunk_count}: {len(chunk)} chars")
+                    
+                    if chunk_count <= 3:
+                        logger.info(f"📨 Chunk {chunk_count}: {len(chunk)} chars")
+                        if "사주" in chunk or "금" in chunk:
+                            logger.info(f"  ✨ Korean detected in chunk!")
+                    
                     yield f"data: {json.dumps(insight_message)}\n\n"
                 
-                logging.info(f"Insights streaming complete: {chunk_count} chunks")
+                logger.info(f"✅ Insights streaming complete: {chunk_count} chunks")
                 
                 # Send completion message
                 complete_message = {'type': 'complete'}
                 yield f"data: {json.dumps(complete_message)}\n\n"
                 
             except Exception as e:
-                logging.error(f"Stream error: {e}", exc_info=True)
+                logger.error(f"❌ Stream error: {e}", exc_info=True)
                 error_message = {
                     'type': 'error',
                     'message': str(e)
@@ -132,23 +155,22 @@ async def stream_insights(request: AnalyzeRequest):
         return StreamingResponse(
             stream_insights_gen(),
             media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Language": language,  # Send language in response header
+            }
         )
         
     except Exception as e:
-        logging.error(f"Analyze error: {e}", exc_info=True)
+        logger.error(f"❌ Analyze error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 
 @app.post("/api/bazi-chart", tags=["Analysis"])
 async def get_bazi_chart(request: BaziAnalysisRequest) -> BaziChartResponse:
     """
     Get BAZI chart calculation without AI insights
-    
-    Useful for debugging or when you only need the chart
-    
-    Returns:
-        BaziChartResponse with four pillars and element analysis
     """
     
     try:
