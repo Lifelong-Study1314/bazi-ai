@@ -171,86 +171,86 @@ def get_system_message(language: str = "en") -> str:
 5. 用简体中文回应"""
     
     elif language == "ko":
-        return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
+        return """당신은 경험이 풍부한 팔자 마스터입니다. 중국 형이학과 운명 분석에 대한 깊은 지식을 가지고 있습니다.
 
-You MUST respond following this exact structure, with blank lines between sections:
+다음의 정확한 구조에 따라 응답해야 합니다. 각 섹션 사이에 빈 줄을 넣으세요:
 
 ### 1. 사주 구조 및 강약 분석
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 2. 직업 및 재물 운
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 3. 관계 및 혼인
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 4. 건강 및 양생
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 5. 성격 및 품질
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 6. 행운 주기 및 시기
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
 ### 7. 인생 지도 및 개인 발전
-[Your analysis content]
+[당신의 분석 내용]
 
 **💡 실행 가능한 제안:**
-• [Suggestion 1]
-• [Suggestion 2]
-• [Suggestion 3]
-• [Suggestion 4]
-• [Suggestion 5]
+• [제안1]
+• [제안2]
+• [제안3]
+• [제안4]
+• [제안5]
 
-CRITICAL RULES:
-1. Use the exact format shown above
-2. Each "###" MUST be on the same line as the number and title (e.g., ### 1. 사주 구조 및 강약 분석)
-3. All suggestions MUST start with "• "
-4. Do NOT create any additional sections or titles
-5. Respond entirely in Korean (한국어로 전체 응답하세요)"""
+중요한 규칙:
+1. 위에 표시된 정확한 형식을 사용해야 합니다
+2. 각 "###"는 같은 줄에 숫자와 제목이 있어야 합니다 (예: ### 1. 사주 구조 및 강약 분석)
+3. 모든 제안은 "• "로 시작해야 합니다
+4. 추가 섹션이나 제목을 만들지 마세요
+5. 한국어로만 전체 응답하세요 (한국어로 전부 응답하세요)"""
     
     else:  # English
         return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
@@ -394,27 +394,27 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 重要：必须按照系统提示中显示的确切格式回应。每个部分开头使用「### 数字. 标题」格式。"""
     
     elif language == "ko":
-        return f"""Please provide a comprehensive BAZI analysis for the following chart. Follow the exact structure and format shown in the system prompt.
+        return f"""다음 팔자 명반에 대한 심층 분석을 제공하세요. 시스템 프롬프트의 정확한 구조와 형식을 따르세요.
 
-Four Pillars:
-- Year: {year_stem}{year_branch}
-- Month: {month_stem}{month_branch}
-- Day: {day_stem}{day_branch}
-- Hour: {hour_stem}{hour_branch}
+사주:
+- 년주: {year_stem}{year_branch}
+- 월주: {month_stem}{month_branch}
+- 일주: {day_stem}{day_branch}
+- 시주: {hour_stem}{hour_branch}
 
-Five Elements Count:
-- Wood: {elements.get('Wood', 0)}
-- Fire: {elements.get('Fire', 0)}
-- Earth: {elements.get('Earth', 0)}
-- Metal: {elements.get('Metal', 0)}
-- Water: {elements.get('Water', 0)}
+오행 통계:
+- 목: {elements.get('Wood', 0)}
+- 화: {elements.get('Fire', 0)}
+- 토: {elements.get('Earth', 0)}
+- 금: {elements.get('Metal', 0)}
+- 수: {elements.get('Water', 0)}
 
-Day Master: {day_master}
-Element Balance Status: {balance}
+일주: {day_master}
+오행 균형 상태: {balance}
 
-IMPORTANT: You MUST follow the exact format shown in the system prompt. Each section starts with "### number. Title" format.
+중요: 시스템 프롬프트에 표시된 정확한 형식으로 응답해야 합니다. 각 섹션은 "### 숫자. 제목" 형식으로 시작해야 합니다.
 
-Respond entirely in Korean (한국어로 전체 응답하세요)."""
+한국어로만 전체 응답하세요 (한국어로 전부 응답하세요)."""
     
     else:  # English
         return f"""Please provide a comprehensive BAZI analysis for the following chart. Follow the exact structure and format shown in the system prompt.
@@ -435,4 +435,4 @@ Five Elements Count:
 Day Master: {day_master}
 Element Balance Status: {balance}
 
-IMPORTANT: You MUST follow the exact format shown in the system prompt. Each section starts with "### number. Title" format. Do not put ### on a separate line from the title."""
+IMPORTANT: You MUST follow the exact format shown in the system prompt. Each section starts with "### number. Title" format. Do not put ### on a separate line from the title. Respond in English."""
