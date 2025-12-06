@@ -8,7 +8,7 @@ Compatible with OpenAI SDK
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 from .prompts import get_analysis_prompt, get_system_message
-from .translator import translate_to_korean
+from .translator import translate_to_korean_google, simple_translate_to_korean
 from config import get_settings
 import logging
 
@@ -46,7 +46,6 @@ class InsightGenerator:
         
         chunk_count = 0
         content_count = 0
-        accumulated_text = ""  # Accumulate for Korean translation
         
         try:
             stream = await self.client.chat.completions.create(
@@ -75,11 +74,10 @@ class InsightGenerator:
                     if content:
                         content_count += 1
                         
-                        # For Korean, accumulate and translate; otherwise yield directly
+                        # For Korean, translate; otherwise yield directly
                         if language == "ko":
-                            accumulated_text += content
-                            # Translate chunk by chunk for better UX
-                            translated_chunk = translate_to_korean(content)
+                            # Use simple translation for speed (async API translation too slow for streaming)
+                            translated_chunk = simple_translate_to_korean(content)
                             logger.debug(f"Yielding translated chunk {chunk_count}: {len(translated_chunk)} chars")
                             yield translated_chunk
                         else:
