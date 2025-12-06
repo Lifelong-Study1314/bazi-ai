@@ -29,7 +29,7 @@ export const checkHealth = async () => {
  */
 export const getBaziChart = async (birthDate, birthHour, gender, language = 'en') => {
   try {
-    const response = await apiClient.post('/bazi-chart', {
+    const response = await apiClient.post('/api/bazi-chart', {
       birth_date: birthDate,
       birth_hour: birthHour,
       gender: gender,
