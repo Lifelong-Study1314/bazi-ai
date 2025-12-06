@@ -3,8 +3,10 @@ import './EnhancedInsightDisplay.css';
 
 
 
+
 export const EnhancedInsightDisplay = ({ insights }) => {
   const [sections, setSections] = useState([]);
+
 
 
 
@@ -13,6 +15,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       setSections([]);
       return;
     }
+
 
 
 
@@ -33,6 +36,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
       // Now split by ### markers
       const parts = insights.split(/###\s+/);
       
@@ -42,6 +46,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         if (!section || !section.trim || section.trim().length === 0) continue;
         const lines = section.split('\n');
         if (!lines || lines.length === 0) continue;
+
 
 
 
@@ -57,6 +62,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
         if (title && content) {
           parsedSections.push({
             type: 'section',
@@ -65,6 +71,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
           });
         }
       }
+
 
 
 
@@ -80,6 +87,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       ]);
     }
   }, [insights]);
+
 
 
 
@@ -134,6 +142,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
   const getSectionColor = (index) => {
     const colors = [
       'section-blue',
@@ -149,6 +158,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
   if (sections.length === 0) {
     return (
       <div className="enhanced-insights-container">
@@ -161,12 +171,14 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
   return (
     <div className="enhanced-insights-container">
       <div className="insights-header">
         <h2>✨ Your BAZI Destiny Analysis</h2>
         <p className="insights-subtitle">A comprehensive reading of your life chart</p>
       </div>
+
 
 
 
@@ -182,6 +194,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
               <span className="section-icon">{getSectionIcon(section.title)}</span>
               <h3>{section.title}</h3>
             </div>
+
 
 
 
@@ -201,6 +214,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
 
 
 
+
 // Helper to format content
 const FormattedContent = ({ content }) => {
   if (!content || typeof content !== 'string') {
@@ -209,7 +223,9 @@ const FormattedContent = ({ content }) => {
 
 
 
+
   const lines = content.split('\n');
+
 
 
 
@@ -218,6 +234,7 @@ const FormattedContent = ({ content }) => {
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (!trimmed) return null;
+
 
 
 
@@ -234,11 +251,18 @@ const FormattedContent = ({ content }) => {
 
 
 
+
         // ✅ IMPROVED: Bullet points with more flexible regex
         // Matches: "- text", "* text", "• text" with or without spaces
         if (/^[-*•]\s*/.test(trimmed)) {
           // Remove the bullet character and optional whitespace
           const bulletText = trimmed.replace(/^[-*•]\s*/, '');
+          
+          // ✅ NEW: Skip empty or incomplete bullets (like "• --" or "• -")
+          if (!bulletText.trim() || bulletText.trim() === '-' || bulletText.trim() === '--') {
+            return null;
+          }
+          
           return (
             <div key={i} className="bullet-point">
               • {bulletText}
@@ -248,10 +272,12 @@ const FormattedContent = ({ content }) => {
 
 
 
+
         // Section separators
         if (trimmed === '---' || trimmed === '***') {
           return <div key={i} className="section-divider" />;
         }
+
 
 
 
@@ -265,6 +291,7 @@ const FormattedContent = ({ content }) => {
     </div>
   );
 };
+
 
 
 
