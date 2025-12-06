@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 
+
 const birthHours = [
   { value: 23, label: '子時 (11pm-1am)' },
   { value: 1, label: '丑時 (1am-3am)' },
@@ -15,10 +16,12 @@ const birthHours = [
   { value: 21, label: '亥時 (9pm-11pm)' }
 ]
 
+
 const genderOptions = [
   { value: 'male', label: '男 / Male', emoji: '♂️' },
   { value: 'female', label: '女 / Female', emoji: '♀️' }
 ]
+
 
 export const InputForm = ({ onSubmit, loading, language }) => {
   const [formData, setFormData] = useState({
@@ -27,7 +30,9 @@ export const InputForm = ({ onSubmit, loading, language }) => {
     gender: 'male'
   })
 
+
   const [errors, setErrors] = useState({})
+
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -44,20 +49,32 @@ export const InputForm = ({ onSubmit, loading, language }) => {
     }
   }
 
+
   const validateForm = () => {
     const newErrors = {}
     
+    const errorMessages = {
+      en: { date: 'Please select your birth date', hour: 'Please select your birth hour' },
+      'zh-TW': { date: '請選擇出生日期', hour: '請選擇出生時辰' },
+      'zh-CN': { date: '请选择出生日期', hour: '请选择出生时辰' },
+      'ko': { date: '출생 날짜를 선택해주세요', hour: '출생 시간을 선택해주세요' }
+    }
+    
+    const msgs = errorMessages[language] || errorMessages.en
+    
     if (!formData.birthDate) {
-      newErrors.birthDate = language === 'en' ? 'Please select your birth date' : language === 'zh-TW' ? '請選擇出生日期' : '请选择出生日期'
+      newErrors.birthDate = msgs.date
     }
     
     if (!formData.birthHour && formData.birthHour !== '0') {
-      newErrors.birthHour = language === 'en' ? 'Please select your birth hour' : language === 'zh-TW' ? '請選擇出生時辰' : '请选择出生时辰'
+      newErrors.birthHour = msgs.hour
     }
+
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
+
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -68,13 +85,17 @@ export const InputForm = ({ onSubmit, loading, language }) => {
     }
   }
 
+
   const labelText = {
     en: { date: 'Birth Date', time: 'Birth Time', gender: 'Gender', submit: 'Analyze My BAZI' },
     'zh-TW': { date: '出生日期', time: '出生時辰', gender: '性別', submit: '計算八字' },
-    'zh-CN': { date: '出生日期', time: '出生时辰', gender: '性别', submit: '计算八字' }
+    'zh-CN': { date: '出生日期', time: '出生时辰', gender: '性别', submit: '计算八字' },
+    'ko': { date: '출생 날짜', time: '출생 시간', gender: '성별', submit: '내 사주 분석' }
   }
 
+
   const labels = labelText[language] || labelText.en
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -102,6 +123,7 @@ export const InputForm = ({ onSubmit, loading, language }) => {
         />
         {errors.birthDate && <p className="text-red-300 text-sm mt-1">{errors.birthDate}</p>}
       </div>
+
 
       {/* Birth Hour */}
       <div>
@@ -132,6 +154,7 @@ export const InputForm = ({ onSubmit, loading, language }) => {
         </select>
         {errors.birthHour && <p className="text-red-300 text-sm mt-1">{errors.birthHour}</p>}
       </div>
+
 
       {/* Gender */}
       <div>
@@ -168,6 +191,7 @@ export const InputForm = ({ onSubmit, loading, language }) => {
         </div>
       </div>
 
+
       {/* Submit Button */}
       <button
         type="submit"
@@ -187,5 +211,6 @@ export const InputForm = ({ onSubmit, loading, language }) => {
     </form>
   )
 }
+
 
 export default InputForm
