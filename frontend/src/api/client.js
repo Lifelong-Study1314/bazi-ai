@@ -79,7 +79,7 @@ export const streamBaziAnalysis = async (
 
     // Make fetch request with streaming
     const response = await fetch(
-      `${API_BASE_URL}/analyze`,
+      `${API_BASE_URL}/api/analyze`,
       {
         method: 'POST',
         headers: {
