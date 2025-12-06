@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 // Determine API base URL
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 // Create axios instance
 const apiClient = axios.create({
@@ -17,7 +17,7 @@ const apiClient = axios.create({
  */
 export const checkHealth = async () => {
   try {
-    const response = await apiClient.get('/api/health')
+    const response = await apiClient.get('/health')
     return response.data
   } catch (error) {
     throw new Error(`Health check failed: ${error.message}`)
@@ -29,7 +29,7 @@ export const checkHealth = async () => {
  */
 export const getBaziChart = async (birthDate, birthHour, gender, language = 'en') => {
   try {
-    const response = await apiClient.post('/api/bazi-chart', {
+    const response = await apiClient.post('/bazi-chart', {
       birth_date: birthDate,
       birth_hour: birthHour,
       gender: gender,
@@ -79,7 +79,7 @@ export const streamBaziAnalysis = async (
 
     // Make fetch request with streaming
     const response = await fetch(
-      `${API_BASE_URL}/api/analyze`,
+      `${API_BASE_URL}/analyze`,
       {
         method: 'POST',  // ← KEY FIX: Use POST instead of GET
         headers: {

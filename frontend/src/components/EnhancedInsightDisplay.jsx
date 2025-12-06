@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './EnhancedInsightDisplay.css';
 
+
 export const EnhancedInsightDisplay = ({ insights }) => {
   const [sections, setSections] = useState([]);
+
 
   useEffect(() => {
     if (!insights || typeof insights !== 'string') {
@@ -10,10 +12,11 @@ export const EnhancedInsightDisplay = ({ insights }) => {
       return;
     }
 
+
     try {
       const parsedSections = [];
       
-      // First, extract the intro (everything before first ###)
+      // Extract the intro (everything before first ###)
       const introMatch = insights.match(/^([\s\S]*?)(###\s+\d+\.)/);
       const intro = introMatch ? introMatch[1] : '';
       
@@ -25,6 +28,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         });
       }
 
+
       // Now split by ### markers
       const parts = insights.split(/###\s+/);
       
@@ -33,7 +37,8 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         const section = parts[i];
         if (!section || !section.trim || section.trim().length === 0) continue;
         const lines = section.split('\n');
-        if (!lines || lines.length === 0) continue;  // ← Safe checks
+        if (!lines || lines.length === 0) continue;
+
 
         // First line should have number and title like "1. Chart Structure & Strength Analysis"
         const firstLine = lines[0] ? lines[0].trim() : '';
@@ -45,6 +50,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
         // Rest is content
         const content = lines.slice(1).join('\n').trim();
 
+
         if (title && content) {
           parsedSections.push({
             type: 'section',
@@ -53,6 +59,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
           });
         }
       }
+
 
       setSections(parsedSections);
     } catch (error) {
@@ -67,15 +74,48 @@ export const EnhancedInsightDisplay = ({ insights }) => {
     }
   }, [insights]);
 
+
   const getSectionIcon = (title) => {
     const iconMap = {
       'Chart Structure': '📊',
-      'Career & Finance': '💼',
+      'Strength': '📊',
+      'Career': '💼',
+      'Finance': '💼',
       'Relationships': '💑',
+      'Marriage': '💑',
       'Health': '🏥',
+      'Wellness': '🏥',
       'Personality': '✨',
-      'Luck Cycles': '🔄',
-      'Life Guidance': '🎯'
+      'Character': '✨',
+      'Luck': '🔄',
+      'Timing': '⏰',
+      'Guidance': '🎯',
+      'Development': '🚀',
+      '命盤': '📊',
+      '職業': '💼',
+      '關係': '💑',
+      '健康': '🏥',
+      '性格': '✨',
+      '幸運': '🔄',
+      '時機': '⏰',
+      '人生': '🎯',
+      '發展': '🚀',
+      '命盘': '📊',
+      '职业': '💼',
+      '关系': '💑',
+      '养生': '🏥',
+      '幸运': '🔄',
+      '时机': '⏰',
+      '个人': '🚀',
+      '사주': '📊',
+      '직업': '💼',
+      '관계': '💑',
+      '건강': '🏥',
+      '성격': '✨',
+      '행운': '🔄',
+      '시기': '⏰',
+      '인생': '🎯',
+      '발전': '🚀'
     };
     
     for (const [key, icon] of Object.entries(iconMap)) {
@@ -83,6 +123,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
     }
     return '📌';
   };
+
 
   const getSectionColor = (index) => {
     const colors = [
@@ -97,6 +138,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
     return colors[index % colors.length];
   };
 
+
   if (sections.length === 0) {
     return (
       <div className="enhanced-insights-container">
@@ -107,12 +149,14 @@ export const EnhancedInsightDisplay = ({ insights }) => {
     );
   }
 
+
   return (
     <div className="enhanced-insights-container">
       <div className="insights-header">
         <h2>✨ Your BAZI Destiny Analysis</h2>
         <p className="insights-subtitle">A comprehensive reading of your life chart</p>
       </div>
+
 
       <div className="sections-wrapper">
         {sections.map((section, index) => (
@@ -126,6 +170,7 @@ export const EnhancedInsightDisplay = ({ insights }) => {
               <span className="section-icon">{getSectionIcon(section.title)}</span>
               <h3>{section.title}</h3>
             </div>
+
 
             <div className="section-content">
               {section.type === 'raw' ? (
@@ -141,19 +186,23 @@ export const EnhancedInsightDisplay = ({ insights }) => {
   );
 };
 
+
 // Helper to format content
 const FormattedContent = ({ content }) => {
   if (!content || typeof content !== 'string') {
     return <p>No content available</p>;
   }
 
+
   const lines = content.split('\n');
+
 
   return (
     <div className="formatted-content">
       {lines.map((line, i) => {
         const trimmed = line.trim();
         if (!trimmed) return null;
+
 
         // Bold text (between **)
         if (trimmed.includes('**')) {
@@ -166,28 +215,22 @@ const FormattedContent = ({ content }) => {
           );
         }
 
-        // Bullet points starting with *
-        if (trimmed.startsWith('* ')) {
+
+        // Bullet points
+        if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
           return (
             <div key={i} className="bullet-point">
-              • {trimmed.replace(/^\*\s*/, '')}
+              • {trimmed.replace(/^(\*|-|•)\s*/, '')}
             </div>
           );
         }
 
-        // Bullet points starting with -
-        if (trimmed.startsWith('- ')) {
-          return (
-            <div key={i} className="bullet-point">
-              • {trimmed.replace(/^-\s*/, '')}
-            </div>
-          );
-        }
 
-        // Section separator lines (---)
+        // Section separators
         if (trimmed === '---' || trimmed === '***') {
           return <div key={i} className="section-divider" />;
         }
+
 
         // Regular paragraph
         return (
@@ -199,5 +242,6 @@ const FormattedContent = ({ content }) => {
     </div>
   );
 };
+
 
 export default EnhancedInsightDisplay;

@@ -2,22 +2,101 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* ============ COLOR VARIABLES - Professional Gold & Navy Theme ============ */
 :root {
-  --primary-color: #2c5282;
-  --secondary-color: #f4b942;
-  --accent-color: #d69e2e;
-  --bg-light: #fafafa;
-  --bg-white: #ffffff;
-  --text-dark: #1a202c;
-  --text-light: #718096;
-  --border-color: #e2e8f0;
+  /* Primary Colors */
+  --color-primary-bg: #1a2035;           /* Deep Navy Blue */
+  --color-secondary-bg: #1e2438;         /* Dark Blue-Gray */
+  --color-card-bg: #242d42;              /* Card Background - Darker */
+  --color-primary-accent: #c9a969;       /* Antiqued Gold */
+  --color-secondary-accent: #b08d57;     /* Bronze */
+  
+  /* Text Colors */
+  --color-primary-text: #c9a969;         /* Gold for headers */
+  --color-body-text: #f5f1e6;            /* Off-White/Ivory */
+  --color-secondary-text: #a0a8c4;       /* Soft Gray */
+  --color-muted-text: #8a92b4;           /* Muted Gray */
+  
+  /* Interactive Elements */
+  --color-button-dark: #0d1117;          /* Dark background */
+  --color-border-gold: #b08d57;          /* Gold border */
+  --color-border-gray: #2a3142;          /* Gray border */
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  
+  /* Legacy variables (kept for compatibility) */
+  --primary-color: #c9a969;
+  --secondary-color: #b08d57;
+  --accent-color: #a0a8c4;
+  --bg-light: #1e2438;
+  --bg-white: #1a2035;
+  --text-dark: #f5f1e6;
+  --text-light: #a0a8c4;
+  --border-color: #2a3142;
+}
+
+/* ============ BASE STYLES ============ */
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--color-primary-bg);
+  color: var(--color-body-text);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ============ TYPOGRAPHY ============ */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-primary-text);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+p {
+  color: var(--color-body-text);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+a {
+  color: var(--color-primary-accent);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-secondary-accent);
+}
+
+/* ============ ANIMATIONS ============ */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -40,6 +119,17 @@ body {
   }
 }
 
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -49,12 +139,21 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.5s ease-out;
 }
 
 .animate-slide-in {
-  animation: slideInRight 0.6s ease-out;
+  animation: slideInUp 0.6s ease-out;
 }
 
 .animate-pulse {
@@ -62,30 +161,184 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #c9a969 0%, #b08d57 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Custom scrollbar */
+/* ============ CUSTOM SCROLLBAR ============ */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--color-secondary-bg);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-secondary-accent);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-primary-accent);
+}
+
+/* ============ TAILWIND COMPONENT OVERRIDES ============ */
+@layer components {
+  /* Button Styles */
+  .btn {
+    @apply inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg transition-all duration-200 no-underline;
+  }
+
+  .btn-primary {
+    @apply text-sm font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+    background: linear-gradient(135deg, var(--color-primary-accent) 0%, var(--color-secondary-accent) 100%);
+    color: var(--color-button-dark);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-secondary-bg);
+    color: var(--color-secondary-accent);
+    border: 2px solid var(--color-secondary-accent);
+  }
+
+  .btn-secondary:hover {
+    background-color: var(--color-border-gray);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    background-color: transparent;
+    color: var(--color-primary-accent);
+    border: 2px solid var(--color-primary-accent);
+  }
+
+  .btn-outline:hover {
+    background-color: rgba(201, 169, 105, 0.1);
+  }
+
+  /* Card Styles */
+  .card {
+    background-color: var(--color-card-bg);
+    border: 1px solid var(--color-border-gray);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+  }
+
+  .card:hover {
+    border-color: var(--color-border-gold);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Form Styles */
+  .form-input {
+    @apply w-full px-4 py-2 rounded-lg transition-all duration-200;
+    background-color: var(--color-secondary-bg);
+    border: 1px solid var(--color-border-gray);
+    color: var(--color-body-text);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--color-primary-accent);
+    box-shadow: 0 0 0 3px rgba(201, 169, 105, 0.1);
+  }
+
+  .form-input::placeholder {
+    color: var(--color-muted-text);
+  }
+
+  .form-label {
+    @apply block mb-2 font-medium text-sm;
+    color: var(--color-secondary-text);
+  }
+
+  .form-group {
+    @apply mb-4;
+  }
+
+  /* Text Utilities */
+  .text-gold {
+    color: var(--color-primary-accent);
+  }
+
+  .text-muted {
+    color: var(--color-secondary-text);
+  }
+
+  .text-light {
+    color: var(--color-body-text);
+  }
+
+  .text-dark-bg {
+    color: var(--color-primary-bg);
+  }
+
+  /* Border Utilities */
+  .border-gold {
+    border-color: var(--color-border-gold);
+  }
+
+  .border-gray-dark {
+    border-color: var(--color-border-gray);
+  }
+
+  /* Background Utilities */
+  .bg-primary {
+    background-color: var(--color-primary-bg);
+  }
+
+  .bg-secondary {
+    background-color: var(--color-secondary-bg);
+  }
+
+  .bg-card {
+    background-color: var(--color-card-bg);
+  }
+
+  .bg-accent {
+    background: linear-gradient(135deg, var(--color-primary-accent) 0%, var(--color-secondary-accent) 100%);
+  }
+
+  /* Shadow Utilities */
+  .shadow-sm-custom {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-md-custom {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-lg-custom {
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+/* ============ RESPONSIVE UTILITIES ============ */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
 }
