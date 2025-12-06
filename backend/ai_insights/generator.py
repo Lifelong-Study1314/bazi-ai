@@ -1,14 +1,11 @@
 """
 AI Insights Generation using DeepSeek Streaming
-
-Generates comprehensive BAZI analysis using DeepSeek API with streaming
-Compatible with OpenAI SDK
 """
 
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 from .prompts import get_analysis_prompt, get_system_message
-from .translator import translate_to_korean_google, simple_translate_to_korean
+from .translator import translate_to_korean
 from config import get_settings
 import logging
 
@@ -35,17 +32,14 @@ class InsightGenerator:
     ) -> AsyncGenerator[str, None]:
         """Generate BAZI insights with streaming response"""
         
-        # For Korean, we ALWAYS request in English then translate
+        # For Korean, request in English then translate
         request_language = "en" if language == "ko" else language
+        should_translate = (language == "ko")
         
-        logger.info(f"DEBUG: Generating insights with request_language={request_language}, output_language={language}")
         user_prompt = get_analysis_prompt(bazi_data, request_language)
         system_message = get_system_message(request_language)
         
-        logger.info(f"Starting insights generation")
-        
         chunk_count = 0
-        content_count = 0
         
         try:
             stream = await self.client.chat.completions.create(
@@ -59,41 +53,25 @@ class InsightGenerator:
                 stream=True
             )
             
-            logger.info(f"Stream created, starting iteration")
-            
             async for chunk in stream:
-                chunk_count += 1
-                
                 try:
                     content = chunk.choices[0].delta.content
                     
-                    if chunk_count <= 5:
-                        logger.info(f"Chunk {chunk_count}: content = {repr(content[:50] if content else None)}")
-                    
-                    # Only yield if not None and not empty string
-                    if content:
-                        content_count += 1
+                    if content and len(content) > 0:
+                        chunk_count += 1
                         
-                        # For Korean, translate; otherwise yield directly
-                        if language == "ko":
-                            # Use simple translation for speed (async API translation too slow for streaming)
-                            translated_chunk = simple_translate_to_korean(content)
-                            logger.debug(f"Yielding translated chunk {chunk_count}: {len(translated_chunk)} chars")
-                            yield translated_chunk
+                        # Translate if Korean requested
+                        if should_translate:
+                            translated = translate_to_korean(content)
+                            yield translated
                         else:
-                            logger.debug(f"Yielding chunk {chunk_count}: {len(content)} chars")
                             yield content
                         
-                except (AttributeError, IndexError, TypeError) as e:
-                    # Log only first error to avoid spam
-                    if chunk_count == 1:
-                        logger.error(f"Error accessing content: {e}", exc_info=True)
+                except (AttributeError, IndexError, TypeError):
                     continue
                 except Exception as e:
-                    logger.error(f"Unexpected error on chunk {chunk_count}: {e}", exc_info=True)
+                    logger.error(f"Chunk error: {e}")
                     continue
-            
-            logger.info(f"Stream complete: {chunk_count} total chunks, {content_count} with content")
             
         except Exception as e:
             logger.error(f"Stream error: {e}", exc_info=True)
