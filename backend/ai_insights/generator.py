@@ -8,6 +8,7 @@ Compatible with OpenAI SDK
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 from .prompts import get_analysis_prompt, get_system_message
+from .translator import translate_to_korean
 from config import get_settings
 import logging
 
@@ -34,17 +35,18 @@ class InsightGenerator:
     ) -> AsyncGenerator[str, None]:
         """Generate BAZI insights with streaming response"""
         
-        # IMPORTANT: Pass language parameter to both functions!
-        logger.info(f"DEBUG: About to generate prompts with language={language}")
-        user_prompt = get_analysis_prompt(bazi_data, language)
-        system_message = get_system_message(language)
-        logger.info(f"DEBUG: System message preview: {system_message[:100]}...")
-        logger.info(f"DEBUG: User prompt preview: {user_prompt[:100]}...")
+        # For Korean, we ALWAYS request in English then translate
+        request_language = "en" if language == "ko" else language
         
-        logger.info(f"Starting insights generation with language: {language}")
+        logger.info(f"DEBUG: Generating insights with request_language={request_language}, output_language={language}")
+        user_prompt = get_analysis_prompt(bazi_data, request_language)
+        system_message = get_system_message(request_language)
+        
+        logger.info(f"Starting insights generation")
         
         chunk_count = 0
         content_count = 0
+        accumulated_text = ""  # Accumulate for Korean translation
         
         try:
             stream = await self.client.chat.completions.create(
@@ -64,8 +66,6 @@ class InsightGenerator:
                 chunk_count += 1
                 
                 try:
-                    # Access content from chunk
-                    # choices is a list, so index it with 
                     content = chunk.choices[0].delta.content
                     
                     if chunk_count <= 5:
@@ -74,8 +74,17 @@ class InsightGenerator:
                     # Only yield if not None and not empty string
                     if content:
                         content_count += 1
-                        logger.debug(f"Yielding chunk {chunk_count}: {len(content)} chars")
-                        yield content
+                        
+                        # For Korean, accumulate and translate; otherwise yield directly
+                        if language == "ko":
+                            accumulated_text += content
+                            # Translate chunk by chunk for better UX
+                            translated_chunk = translate_to_korean(content)
+                            logger.debug(f"Yielding translated chunk {chunk_count}: {len(translated_chunk)} chars")
+                            yield translated_chunk
+                        else:
+                            logger.debug(f"Yielding chunk {chunk_count}: {len(content)} chars")
+                            yield content
                         
                 except (AttributeError, IndexError, TypeError) as e:
                     # Log only first error to avoid spam
