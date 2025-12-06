@@ -5,7 +5,6 @@ AI Insights Generation using DeepSeek Streaming
 from typing import AsyncGenerator
 from openai import AsyncOpenAI
 from .prompts import get_analysis_prompt, get_system_message
-from .translator import translate_to_korean
 from config import get_settings
 import logging
 
@@ -32,14 +31,8 @@ class InsightGenerator:
     ) -> AsyncGenerator[str, None]:
         """Generate BAZI insights with streaming response"""
         
-        # For Korean, request in English then translate
-        request_language = "en" if language == "ko" else language
-        should_translate = (language == "ko")
-        
-        user_prompt = get_analysis_prompt(bazi_data, request_language)
-        system_message = get_system_message(request_language)
-        
-        chunk_count = 0
+        user_prompt = get_analysis_prompt(bazi_data, language)
+        system_message = get_system_message(language)
         
         try:
             stream = await self.client.chat.completions.create(
@@ -58,14 +51,7 @@ class InsightGenerator:
                     content = chunk.choices[0].delta.content
                     
                     if content and len(content) > 0:
-                        chunk_count += 1
-                        
-                        # Translate if Korean requested
-                        if should_translate:
-                            translated = translate_to_korean(content)
-                            yield translated
-                        else:
-                            yield content
+                        yield content
                         
                 except (AttributeError, IndexError, TypeError):
                     continue
