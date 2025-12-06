@@ -48,15 +48,6 @@ function App() {
       stopButton: '停止分析',
       analyzeButton: '✨ 分析另一个人',
       footer: '🔮 古代智慧遇上现代科技。由八字命理学和DeepSeek AI驱动。'
-    },
-    'ko': {
-      main: 'BAZI AI 사주 분석',
-      subtitle: '운명은 정해졌고, 태어나 정해졌다. 선택하여 살고, 자신이 되어라.',
-      tagline: '고대의 지혜와 현대 기술의 만남',
-      error: '오류',
-      stopButton: '분석 중지',
-      analyzeButton: '✨ 다른 사람 분석',
-      footer: '🔮 고대 지혜가 현대 기술과 만나다. BAZI 방법론과 DeepSeek AI로 제공됩니다.'
     }
   }
 
@@ -77,6 +68,7 @@ function App() {
           zIndex: 0
         }}
       />
+
 
       <div className="relative z-10">
         <div className="max-w-2xl mx-auto">

@@ -1,6 +1,6 @@
 """
 Prompts for BAZI insights generation
-Supports English, Traditional Chinese, Simplified Chinese, and Korean
+Supports English, Traditional Chinese Simplified, and Traditional Chinese
 """
 
 
@@ -18,22 +18,20 @@ def get_system_message(language: str = "en") -> str:
 5. 提供可行的、基於五行平衡原則的建議
 
 分析結構：
-### 1. 命盤結構與強弱分析
-### 2. 職業與財富
-### 3. 關係與婚姻
-### 4. 健康與養生
-### 5. 性格與品質
-### 6. 幸運周期與時機
-### 7. 人生指引與個人發展
+## 命盤結構與強弱分析
+## 職業與財富
+## 關係與婚姻
+## 健康與養生
+## 性格與品質
+## 幸運周期與時機
+## 人生指引與個人發展
 
-**重要：在分析的每個主要部分之後，請提供3-5個「行動建議」，格式如下：
+**重要：在分析的每個主要部分之後，請提供具體的行動建議，使用以下格式（不要使用"• --"）：
 
 **💡 可行建議：**
-• [具體行動1：明確、可在1-3個月內執行的建議]
-• [具體行動2：與你的八字特質相關的具體步驟]
-• [具體行動3：實用的日常建議或時機提示]
-• [可選行動4：額外的智慧洞見]
-• [可選行動5：特別重要的建議]
+- 建議1：明確、可在1-3個月內執行的建議
+- 建議2：與你的八字特質相關的具體步驟
+- 建議3：實用的日常建議或時機提示
 
 用繁體中文回應。"""
     
@@ -48,54 +46,24 @@ def get_system_message(language: str = "en") -> str:
 5. 提供可行的、基于五行平衡原则的建议
 
 分析结构：
-### 1. 命盘结构与强弱分析
-### 2. 职业与财富
-### 3. 关系与婚姻
-### 4. 健康与养生
-### 5. 性格与品质
-### 6. 幸运周期与时机
-### 7. 人生指引与个人发展
+## 命盘结构与强弱分析
+## 职业与财富
+## 关系与婚姻
+## 健康与养生
+## 性格与品质
+## 幸运周期与时机
+## 人生指引与个人发展
 
-**重要：在分析的每个主要部分之后，请提供3-5个「行动建议」，格式如下：
+**重要：在分析的每个主要部分之后，请提供具体的行动建议，使用以下格式（不要使用"• --"）：
 
 **💡 可行建议：**
-• [具体行动1：明确、可在1-3个月内执行的建议]
-• [具体行动2：与你的八字特质相关的具体步骤]
-• [具体行动3：实用的日常建议或时机提示]
-• [可选行动4：额外的智慧洞见]
-• [可选行动5：特别重要的建议]
+- 建议1：明确、可在1-3个月内执行的建议
+- 建议2：与你的八字特质相关的具体步骤
+- 建议3：实用的日常建议或时机提示
 
 用简体中文回应。"""
     
-    elif language == "ko":
-        return """당신은 경험이 풍부한 팔자 마스터입니다. 당신의 분석:
-1. 일주의 강약을 직접적으로 설명하세요
-2. 직업, 재물, 관계, 건강에 대한 실용적인 지도를 제공하세요
-3. 행운 주기와 시기를 설명하세요
-4. 동정심과 존경으로 대하세요
-5. 오행 균형 원칙에 기반한 실행 가능한 조언을 제공하세요
-
-분석 구조:
-### 1. 사주 구조 및 강약 분석
-### 2. 직업 및 재물 운
-### 3. 관계 및 혼인
-### 4. 건강 및 양생
-### 5. 성격 및 품질
-### 6. 행운 주기 및 시기
-### 7. 인생 지도 및 개인 발전
-
-중요: 각 주요 분석 섹션 후 3-5개의 "실행 가능한 제안"을 다음과 같이 포맷하세요:
-
-**💡 실행 가능한 제안:**
-• [구체적인 행동 1: 명확하고 1-3개월 내에 실행 가능]
-• [구체적인 행동 2: 사주 특성과 관련된 구체적 단계]
-• [구체적인 행동 3: 실질적인 일상 팁 또는 시기 조언]
-• [선택 사항의 행동 4: 추가 지혜 또는 통찰]
-• [선택 사항의 행동 5: 특히 중요한 제안]
-
-한국어로만 응답하세요. 모든 분석을 한국어로 작성하세요."""
-    
-    else:  # English
+    else:  # English (default)
         return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
 
 Your analysis should:
@@ -106,22 +74,20 @@ Your analysis should:
 5. Offer actionable advice based on Five Element balance principles
 
 Structure your analysis with these sections:
-### 1. Chart Structure & Strength Analysis
-### 2. Career & Finance
-### 3. Relationships & Marriage
-### 4. Health & Wellness
-### 5. Personality & Character
-### 6. Luck Cycles & Timing
-### 7. Life Guidance & Personal Development
+## Chart Structure & Strength Analysis
+## Career & Finance
+## Relationships & Marriage
+## Health & Wellness
+## Personality & Character
+## Luck Cycles & Timing
+## Life Guidance & Personal Development
 
-**IMPORTANT: After each major analysis section, provide 3-5 "Actionable Suggestions" formatted exactly like this:
+**IMPORTANT: After each major analysis section, provide specific actionable suggestions using this format (do NOT use "• --"):
 
 **💡 Actionable Suggestions:**
-• [Specific action #1: Be concrete and executable within 1-3 months]
-• [Specific action #2: A specific step aligned with their BAZI profile]
-• [Specific action #3: Practical daily tip or timing advice]
-• [Optional action #4: Additional wisdom or insight]
-• [Optional action #5: Particularly important recommendation]
+- Suggestion 1: Be concrete and executable within 1-3 months
+- Suggestion 2: A specific step aligned with their BAZI profile
+- Suggestion 3: Practical daily tip or timing advice
 
 Respond in English."""
 
@@ -185,28 +151,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 
 请提供深入的八字分析和人生指导。"""
     
-    elif language == "ko":
-        return f"""다음 팔자 명반을 분석하세요:
-
-사주:
-- 년주: {year_stem}{year_branch}
-- 월주: {month_stem}{month_branch}
-- 일주: {day_stem}{day_branch}
-- 시주: {hour_stem}{hour_branch}
-
-오행 통계:
-- 목: {elements.get('Wood', 0)}
-- 화: {elements.get('Fire', 0)}
-- 토: {elements.get('Earth', 0)}
-- 금: {elements.get('Metal', 0)}
-- 수: {elements.get('Water', 0)}
-
-일주: {day_master}
-오행 균형 상태: {balance}
-
-깊은 팔자 분석과 인생 지도를 제공하세요. 시스템 프롬프트에 지정된 대로 한국어로 모든 섹션 헤더를 포함하여 한국어로 전체 응답을 작성하세요."""
-    
-    else:  # English
+    else:  # English (default)
         return f"""Please provide a comprehensive BAZI analysis for the following chart:
 
 Four Pillars:
