@@ -68,11 +68,8 @@ def get_system_message(language: str = "en") -> str:
 用简体中文回应。"""
     
     elif language == "ko":
-        # For Korean - VERY AGGRESSIVE with the instruction
-        return """당신은 경험이 풍부한 팔자 마스터입니다. 
-
-당신의 분석:
-1. 일주(일간)의 강약을 직접적으로 설명하세요
+        return """당신은 경험이 풍부한 팔자 마스터입니다. 당신의 분석:
+1. 일주의 강약을 직접적으로 설명하세요
 2. 직업, 재물, 관계, 건강에 대한 실용적인 지도를 제공하세요
 3. 행운 주기와 시기를 설명하세요
 4. 동정심과 존경으로 대하세요
@@ -96,7 +93,7 @@ def get_system_message(language: str = "en") -> str:
 • [선택 사항의 행동 4: 추가 지혜 또는 통찰]
 • [선택 사항의 행동 5: 특히 중요한 제안]
 
-한국어로만 응답하세요. 모든 답변은 한국어여야 합니다. 절대로 영어를 사용하지 마세요. 오직 한국어만 사용하세요."""
+한국어로만 응답하세요. 모든 분석을 한국어로 작성하세요."""
     
     else:  # English
         return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
@@ -189,7 +186,6 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 请提供深入的八字分析和人生指导。"""
     
     elif language == "ko":
-        # Korean user prompt - also ALL KOREAN
         return f"""다음 팔자 명반을 분석하세요:
 
 사주:
@@ -208,7 +204,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 일주: {day_master}
 오행 균형 상태: {balance}
 
-깊은 팔자 분석과 인생 지도를 제공하세요. 시스템 프롬프트에 지정된 대로 한국어로 모든 섹션 헤더를 포함하여 한국어로 전체 응답을 작성하세요. 절대로 영어를 사용하지 마세요. 한국어로만 답변하세요."""
+깊은 팔자 분석과 인생 지도를 제공하세요. 시스템 프롬프트에 지정된 대로 한국어로 모든 섹션 헤더를 포함하여 한국어로 전체 응답을 작성하세요."""
     
     else:  # English
         return f"""Please provide a comprehensive BAZI analysis for the following chart:
