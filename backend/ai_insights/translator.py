@@ -1,16 +1,15 @@
 """
 Korean translation for BAZI analysis
-Simple term-by-term replacement
 """
 
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
 
-# Comprehensive translation dictionary
 KOREAN_MAP = {
-    # Section titles
+    # Section titles (longest first)
     "Chart Structure & Strength Analysis": "사주 구조 및 강약 분석",
     "Career & Finance": "직업 및 재물 운",
     "Relationships & Marriage": "관계 및 혼인",
@@ -20,17 +19,10 @@ KOREAN_MAP = {
     "Life Guidance & Personal Development": "인생 지도 및 개인 발전",
     "Actionable Suggestions": "실행 가능한 제안",
     
-    # Common single words
+    # Phrases
     "Day Master": "일주",
-    "Day": "날",
-    "Master": "주",
-    "Season": "계절",
-    "Support": "지지",
-    "Opposition": "대항",
-    "Conclusion": "결론",
-    "Overall": "전체",
-    "Strength": "강약",
-    "Analysis": "분석",
+    "Overall Strength": "전체 강약",
+    "Key Dynamics": "핵심 역학",
     
     # Elements
     "Wood": "목",
@@ -38,38 +30,36 @@ KOREAN_MAP = {
     "Earth": "토",
     "Metal": "금",
     "Water": "수",
-    "Yang": "양",
-    "Yin": "음",
     
-    # Strength descriptors
+    # Strength
     "Strong": "강함",
     "Weak": "약함",
     "Balanced": "균형",
-    "Neutral": "중립",
     
-    # Common words
-    "The": "그",
+    # Common words (careful with these!)
+    "your": "당신의",
     "Your": "당신의",
+    "you": "당신",
     "You": "당신",
-    "Chart": "사주",
-    "Analysis": "분석",
-    "Insights": "통찰",
 }
 
 
 def translate_to_korean(text: str) -> str:
     """
-    Translate English text to Korean using simple replacements
+    Translate English to Korean using word-boundary aware replacement
     """
     if not text or len(text) == 0:
         return text
     
     result = text
     
-    # Replace terms (longer first to avoid partial matches)
+    # Sort by length (longest first) to handle phrases before individual words
     sorted_map = sorted(KOREAN_MAP.items(), key=lambda x: len(x[0]), reverse=True)
     
     for english, korean in sorted_map:
-        result = result.replace(english, korean)
+        # Use word boundary regex to avoid partial matches
+        # \b matches word boundaries
+        pattern = r'\b' + re.escape(english) + r'\b'
+        result = re.sub(pattern, korean, result, flags=re.IGNORECASE)
     
     return result
