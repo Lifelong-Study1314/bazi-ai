@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 0,  // ✅ CHANGED: No timeout (critical for streaming)
   headers: {
     'Content-Type': 'application/json',
   }
@@ -81,7 +81,7 @@ export const streamBaziAnalysis = async (
     const response = await fetch(
       `${API_BASE_URL}/analyze`,
       {
-        method: 'POST',  // ← KEY FIX: Use POST instead of GET
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
