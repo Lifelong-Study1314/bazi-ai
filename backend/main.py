@@ -11,6 +11,7 @@ import json
 import logging
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from models import AnalyzeRequest  # ← ADD THIS LINE
@@ -37,13 +38,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://yellow-mud-0496da91e.3.azurestaticapps.net",  # ← Your frontend URL
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://20.184.149.72:8000"
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -193,6 +188,19 @@ async def root():
             "chart": "/api/bazi-chart",
         }
     }
+
+
+@app.options("/{full_path:path}")
+async def preflight(full_path: str):
+    """Handle CORS preflight requests"""
+    return JSONResponse(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"
+        }
+    )
 
 
 if __name__ == "__main__":

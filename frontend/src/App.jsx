@@ -6,6 +6,7 @@ import ResultsDisplay from './components/ResultsDisplay'
 import { useAnalysisBazi } from './hooks/useAnalysisBazi'
 import './styles/globals.css'
 
+
 function App() {
   const [language, setLanguage] = useState('en')
   const { 
@@ -19,121 +20,201 @@ function App() {
     stopAnalysis 
   } = useAnalysisBazi()
 
+
   const titles = {
     en: {
       main: 'BAZI AI Analysis',
-      subtitle: '命運已定，生而注定。選擇而生，活出真我。',
-      tagline: 'Destiny is fixed, born predetermined. Choose to live, become yourself.',
-      error: 'Error'
+      subtitle: 'Destiny is fixed, born predetermined. Choose to live, become yourself.',
+      tagline: 'Ancient wisdom meets modern technology',
+      error: 'Error',
+      stopButton: 'Stop Analysis',
+      analyzeButton: '✨ Analyze Another Person',
+      footer: '🔮 Ancient wisdom meets modern technology. Powered by BAZI and DeepSeek AI.'
     },
     'zh-TW': {
       main: 'BAZI AI 命理分析',
       subtitle: '命運已定，生而注定。選擇而生，活出真我。',
-      tagline: '用古代智慧和現代AI了解您的人生',
-      error: '錯誤'
+      tagline: '用古代智慧和現代科技了解您的人生',
+      error: '錯誤',
+      stopButton: '停止分析',
+      analyzeButton: '✨ 分析另一個人',
+      footer: '🔮 古代智慧遇上現代科技。由八字命理學和DeepSeek AI驅動。'
     },
     'zh-CN': {
       main: 'BAZI AI 命理分析',
       subtitle: '命运已定，生而注定。选择而生，活出真我。',
-      tagline: '用古代智慧和现代AI了解您的人生',
-      error: '错误'
+      tagline: '用古代智慧和现代科技了解您的人生',
+      error: '错误',
+      stopButton: '停止分析',
+      analyzeButton: '✨ 分析另一个人',
+      footer: '🔮 古代智慧遇上现代科技。由八字命理学和DeepSeek AI驱动。'
+    },
+    'ko': {
+      main: 'BAZI AI 사주 분석',
+      subtitle: '운명은 정해졌고, 태어나 정해졌다. 선택하여 살고, 자신이 되어라.',
+      tagline: '고대의 지혜와 현대 기술의 만남',
+      error: '오류',
+      stopButton: '분석 중지',
+      analyzeButton: '✨ 다른 사람 분석',
+      footer: '🔮 고대 지혜가 현대 기술과 만나다. BAZI 방법론과 DeepSeek AI로 제공됩니다.'
     }
   }
 
+
   const content = titles[language] || titles.en
 
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-500 to-pink-600 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-5xl font-bold text-white mb-2">✨ {content.main}</h1>
-          <p className="text-xl text-purple-200 mb-2">{content.subtitle}</p>
-          <p className="text-lg text-purple-100">{content.tagline}</p>
-        </div>
+    <div 
+      className="min-h-screen py-12 px-4"
+      style={{ backgroundColor: '#1a2035' }}
+    >
+      {/* Subtle gradient overlay for visual interest */}
+      <div 
+        className="fixed inset-0 pointer-events-none opacity-20"
+        style={{
+          background: 'radial-gradient(circle at top right, #c9a969, transparent 70%)',
+          zIndex: 0
+        }}
+      />
 
-        {/* Language Selector */}
-        <LanguageSelector 
-          language={language} 
-          onLanguageChange={setLanguage}
-        />
-
-        {/* Main Content Container */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="p-8">
-            {/* Error Display */}
-            {error && (
-              <div className="mb-6 bg-red-100 border-l-4 border-red-500 p-4 rounded">
-                <p className="text-red-800 font-semibold">
-                  ⚠️ {content.error}: {error}
-                </p>
-              </div>
-            )}
-
-            {/* Progress Bar */}
-            <ProgressBar 
-              progress={progress} 
-              loading={loading}
-              language={language}
-            />
-
-            {/* Show form if not loading or show results if complete */}
-            {!loading && !analysisComplete ? (
-              <InputForm 
-                onSubmit={analyzeBazi}
-                loading={loading}
-                language={language}
-              />
-            ) : analysisComplete ? (
-              <>
-                <ResultsDisplay 
-                  baziChart={baziChart}
-                  insights={insights}
-                  language={language}
-                />
-                <button
-                  onClick={() => {
-                    // Reset state by reloading page
-                    window.location.href = window.location.href
-                  }}
-                  className="w-full mt-6 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-lg hover:shadow-lg transition-all duration-200"
-                >
-                  {language === 'en' && '✨ Analyze Another Person'}
-                  {language === 'zh-TW' && '✨ 分析另一個人'}
-                  {language === 'zh-CN' && '✨ 分析另一个人'}
-                </button>
-              </>
-            ) : (
-              <InputForm 
-                onSubmit={analyzeBazi}
-                loading={loading}
-                language={language}
-              />
-            )}
-
-            {/* Stop Button (shown when loading) */}
-            {loading && (
-              <button
-                onClick={stopAnalysis}
-                className="w-full mt-4 py-2 px-4 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-all duration-200"
-              >
-                ⏹️ {language === 'en' ? 'Stop Analysis' : language === 'zh-TW' ? '停止分析' : '停止分析'}
-              </button>
-            )}
+      <div className="relative z-10">
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8 animate-fade-in">
+            <h1 
+              className="text-5xl font-bold mb-2"
+              style={{ 
+                color: '#c9a969',
+                textShadow: '0 4px 12px rgba(0, 0, 0, 0.6)'
+              }}
+            >
+              ✨ {content.main}
+            </h1>
+            <p 
+              className="text-xl mb-2"
+              style={{ color: '#f5f1e6' }}
+            >
+              {content.subtitle}
+            </p>
+            <p 
+              className="text-lg"
+              style={{ color: '#a0a8c4' }}
+            >
+              {content.tagline}
+            </p>
           </div>
 
-          {/* Footer */}
-          <div className="bg-gray-50 px-8 py-4 border-t border-gray-200 text-center text-gray-600 text-sm">
-            <p>
-              {language === 'en' && '🔮 Ancient wisdom meets modern AI. Powered by BAZI methodology and OpenAI GPT-4.'}
-              {language === 'zh-TW' && '🔮 古代智慧遇上現代AI。由八字命理學和OpenAI GPT-4驅動。'}
-              {language === 'zh-CN' && '🔮 古代智慧遇上现代AI。由八字命理学和OpenAI GPT-4驱动。'}
-            </p>
+
+          {/* Language Selector */}
+          <LanguageSelector 
+            language={language} 
+            onLanguageChange={setLanguage}
+          />
+
+
+          {/* Main Content Container */}
+          <div 
+            className="rounded-2xl shadow-2xl overflow-hidden"
+            style={{ 
+              backgroundColor: '#1e2438',
+              border: '1px solid #2a3142'
+            }}
+          >
+            <div className="p-8">
+              {/* Error Display */}
+              {error && (
+                <div 
+                  className="mb-6 border-l-4 p-4 rounded"
+                  style={{ 
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    borderLeftColor: '#dc2626'
+                  }}
+                >
+                  <p 
+                    className="font-semibold"
+                    style={{ color: '#fca5a5' }}
+                  >
+                    ⚠️ {content.error}: {error}
+                  </p>
+                </div>
+              )}
+
+
+              {/* Progress Bar */}
+              <ProgressBar 
+                progress={progress} 
+                loading={loading}
+                language={language}
+              />
+
+
+              {/* Show form if not loading or show results if complete */}
+              {!loading && !analysisComplete ? (
+                <InputForm 
+                  onSubmit={analyzeBazi}
+                  loading={loading}
+                  language={language}
+                />
+              ) : analysisComplete ? (
+                <>
+                  <ResultsDisplay 
+                    baziChart={baziChart}
+                    insights={insights}
+                    language={language}
+                  />
+                  <button
+                    onClick={() => {
+                      window.location.href = window.location.href
+                    }}
+                    className="w-full mt-6 py-3 px-4 font-bold rounded-lg hover:shadow-lg transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #c9a969 0%, #b08d57 100%)',
+                      color: '#0d1117'
+                    }}
+                  >
+                    {content.analyzeButton}
+                  </button>
+                </>
+              ) : (
+                <InputForm 
+                  onSubmit={analyzeBazi}
+                  loading={loading}
+                  language={language}
+                />
+              )}
+
+
+              {/* Stop Button (shown when loading) */}
+              {loading && (
+                <button
+                  onClick={stopAnalysis}
+                  className="w-full mt-4 py-2 px-4 text-white font-semibold rounded-lg hover:opacity-90 transition-all duration-200"
+                  style={{ backgroundColor: '#dc2626' }}
+                >
+                  ⏹️ {content.stopButton}
+                </button>
+              )}
+            </div>
+
+
+            {/* Footer */}
+            <div 
+              className="px-8 py-4 border-t text-center text-sm"
+              style={{ 
+                backgroundColor: '#0d1117',
+                borderTopColor: '#2a3142',
+                color: '#a0a8c4'
+              }}
+            >
+              <p>{content.footer}</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   )
 }
+
 
 export default App
