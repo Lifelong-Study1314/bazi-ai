@@ -68,36 +68,35 @@ def get_system_message(language: str = "en") -> str:
 用简体中文回应。"""
     
     elif language == "ko":
-        # For Korean, use English internally for better DeepSeek understanding
-        # but tell it to respond in Korean with Korean formatting
-        return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
+        # For Korean - VERY AGGRESSIVE with the instruction
+        return """당신은 경험이 풍부한 팔자 마스터입니다. 
 
-Your analysis should:
-1. Directly and specifically explain the strength/weakness of the Day Master
-2. Provide practical guidance on career, wealth, relationships, and health
-3. Explain luck cycles and timing
-4. Be compassionate and respectful in tone
-5. Offer actionable advice based on Five Element balance principles
+당신의 분석:
+1. 일주(일간)의 강약을 직접적으로 설명하세요
+2. 직업, 재물, 관계, 건강에 대한 실용적인 지도를 제공하세요
+3. 행운 주기와 시기를 설명하세요
+4. 동정심과 존경으로 대하세요
+5. 오행 균형 원칙에 기반한 실행 가능한 조언을 제공하세요
 
-Structure your analysis with these sections:
-### 1. 사주 구조 및 강약 분석 (Chart Structure & Strength Analysis)
-### 2. 직업 및 재물 운 (Career & Finance)
-### 3. 관계 및 혼인 (Relationships & Marriage)
-### 4. 건강 및 양생 (Health & Wellness)
-### 5. 성격 및 품질 (Personality & Character)
-### 6. 행운 주기 및 시기 (Luck Cycles & Timing)
-### 7. 인생 지도 및 개인 발전 (Life Guidance & Personal Development)
+분석 구조:
+### 1. 사주 구조 및 강약 분석
+### 2. 직업 및 재물 운
+### 3. 관계 및 혼인
+### 4. 건강 및 양생
+### 5. 성격 및 품질
+### 6. 행운 주기 및 시기
+### 7. 인생 지도 및 개인 발전
 
-**IMPORTANT: After each major analysis section, provide 3-5 "Actionable Suggestions" formatted exactly like this:
+중요: 각 주요 분석 섹션 후 3-5개의 "실행 가능한 제안"을 다음과 같이 포맷하세요:
 
 **💡 실행 가능한 제안:**
-• [구체적인 행동 1: 명확하고 1-3개월 내에 실행 가능한 제안]
-• [구체적인 행동 2: 당신의 사주 특성과 관련된 구체적인 단계]
+• [구체적인 행동 1: 명확하고 1-3개월 내에 실행 가능]
+• [구체적인 행동 2: 사주 특성과 관련된 구체적 단계]
 • [구체적인 행동 3: 실질적인 일상 팁 또는 시기 조언]
-• [선택 사항의 행동 4: 추가적인 지혜 또는 통찰]
+• [선택 사항의 행동 4: 추가 지혜 또는 통찰]
 • [선택 사항의 행동 5: 특히 중요한 제안]
 
-Respond entirely in Korean (한국어로 전부 응답하세요)."""
+한국어로만 응답하세요. 모든 답변은 한국어여야 합니다. 절대로 영어를 사용하지 마세요. 오직 한국어만 사용하세요."""
     
     else:  # English
         return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
@@ -190,26 +189,26 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 请提供深入的八字分析和人生指导。"""
     
     elif language == "ko":
-        # Use English data description for better DeepSeek compatibility
-        return f"""Please provide a comprehensive BAZI analysis for the following chart. Format your entire response in Korean (한국어로 전체 응답을 제공하세요):
+        # Korean user prompt - also ALL KOREAN
+        return f"""다음 팔자 명반을 분석하세요:
 
-Four Pillars:
-- Year: {year_stem}{year_branch}
-- Month: {month_stem}{month_branch}
-- Day: {day_stem}{day_branch}
-- Hour: {hour_stem}{hour_branch}
+사주:
+- 년주: {year_stem}{year_branch}
+- 월주: {month_stem}{month_branch}
+- 일주: {day_stem}{day_branch}
+- 시주: {hour_stem}{hour_branch}
 
-Five Elements Count:
-- Wood: {elements.get('Wood', 0)}
-- Fire: {elements.get('Fire', 0)}
-- Earth: {elements.get('Earth', 0)}
-- Metal: {elements.get('Metal', 0)}
-- Water: {elements.get('Water', 0)}
+오행 통계:
+- 목: {elements.get('Wood', 0)}
+- 화: {elements.get('Fire', 0)}
+- 토: {elements.get('Earth', 0)}
+- 금: {elements.get('Metal', 0)}
+- 수: {elements.get('Water', 0)}
 
-Day Master: {day_master}
-Element Balance Status: {balance}
+일주: {day_master}
+오행 균형 상태: {balance}
 
-Please provide deep insights and practical guidance for this person's destiny. Format your entire response in Korean with the section headers in Korean as specified in the system prompt."""
+깊은 팔자 분석과 인생 지도를 제공하세요. 시스템 프롬프트에 지정된 대로 한국어로 모든 섹션 헤더를 포함하여 한국어로 전체 응답을 작성하세요. 절대로 영어를 사용하지 마세요. 한국어로만 답변하세요."""
     
     else:  # English
         return f"""Please provide a comprehensive BAZI analysis for the following chart:
