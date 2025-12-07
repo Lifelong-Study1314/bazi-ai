@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import Markdown from 'react-markdown'
 import EnhancedInsightDisplay from './EnhancedInsightDisplay'
-import PDFExportButton from './PDFExportButton'
 import './ResultsDisplay.css'
 
 export const ResultsDisplay = ({ baziChart, insights, language }) => {
@@ -49,26 +48,8 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     'ko': { year: '년', month: '월', day: '일', hour: '시' }
   }
 
-  // Prepare user info for PDF export
-  const userInfo = {
-    name: 'User',
-    birthDate: '',
-    birthTime: '',
-    gender: 'Unknown'
-  }
-
   return (
     <div className="space-y-6 animate-slide-in pb-4">
-      {/* PDF Export Button - Top Right */}
-      <div className="flex justify-end mb-4">
-        <PDFExportButton
-          userInfo={userInfo}
-          baziData={baziChart}
-          insights={insights}
-          language={language}
-          isDisabled={!insights}
-        />
-      </div>
 
       {/* BAZI Chart Card */}
       <div 
