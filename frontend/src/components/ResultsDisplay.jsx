@@ -1,14 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import Markdown from 'react-markdown'
-import EnhancedInsightDisplay from './EnhancedInsightDisplay';
-
+import EnhancedInsightDisplay from './EnhancedInsightDisplay'
+import PDFExportButton from './PDFExportButton'
+import './ResultsDisplay.css'
 
 export const ResultsDisplay = ({ baziChart, insights, language }) => {
   if (!baziChart) return null
 
-
   const { four_pillars, day_master, elements } = baziChart
-
 
   const titles = {
     en: {
@@ -41,7 +40,6 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     }
   }
 
-
   const labels = titles[language] || titles.en
 
   const pillarNames = {
@@ -51,9 +49,27 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     'ko': { year: '년', month: '월', day: '일', hour: '시' }
   }
 
+  // Prepare user info for PDF export
+  const userInfo = {
+    name: 'User',
+    birthDate: '',
+    birthTime: '',
+    gender: 'Unknown'
+  }
 
   return (
     <div className="space-y-6 animate-slide-in pb-4">
+      {/* PDF Export Button - Top Right */}
+      <div className="flex justify-end mb-4">
+        <PDFExportButton
+          userInfo={userInfo}
+          baziData={baziChart}
+          insights={insights}
+          language={language}
+          isDisabled={!insights}
+        />
+      </div>
+
       {/* BAZI Chart Card */}
       <div 
         className="rounded-xl shadow-lg p-6"
@@ -65,7 +81,6 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
         >
           {labels.chart}
         </h2>
-
 
         {/* Four Pillars */}
         <div className="mb-6">
@@ -103,7 +118,6 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
           </div>
         </div>
 
-
         {/* Day Master */}
         <div 
           className="mb-6 rounded-lg p-4"
@@ -124,7 +138,6 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
             <div className="text-4xl">🎯</div>
           </div>
         </div>
-
 
         {/* Elements */}
         <div 
@@ -167,7 +180,6 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
         </div>
       </div>
 
-
       {/* Insights - Let EnhancedInsightDisplay handle it */}
       {insights && (
         <EnhancedInsightDisplay insights={insights} />
@@ -175,6 +187,5 @@ export const ResultsDisplay = ({ baziChart, insights, language }) => {
     </div>
   )
 }
-
 
 export default ResultsDisplay

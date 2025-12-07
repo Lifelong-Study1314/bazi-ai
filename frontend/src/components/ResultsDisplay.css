@@ -1,0 +1,170 @@
+/* ResultsDisplay specific styles */
+
+.space-y-6 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* PDF Export button positioning */
+.pdf-export-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #c9a961 0%, #a87f3a 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(201, 169, 97, 0.3);
+}
+
+.pdf-export-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d4b36d 0%, #b88d47 100%);
+  box-shadow: 0 4px 12px rgba(201, 169, 97, 0.4);
+  transform: translateY(-2px);
+}
+
+.pdf-export-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.pdf-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal styling */
+.pdf-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.pdf-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+}
+
+.pdf-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pdf-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+}
+
+.pdf-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.pdf-modal-body {
+  padding: 20px;
+}
+
+.pdf-modal-label {
+  display: block;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.pdf-modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.pdf-modal-input:focus {
+  outline: none;
+  border-color: #c9a961;
+  box-shadow: 0 0 0 3px rgba(201, 169, 97, 0.1);
+}
+
+.pdf-modal-hint {
+  font-size: 12px;
+  color: #999;
+  margin: 8px 0 0 0;
+}
+
+.pdf-modal-footer {
+  display: flex;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  justify-content: flex-end;
+}
+
+.pdf-modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pdf-modal-btn.secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.pdf-modal-btn.primary {
+  background: linear-gradient(135deg, #c9a961 0%, #a87f3a 100%);
+  color: white;
+}
+
+.pdf-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .pdf-export-btn {
+    width: 100%;
+    padding: 12px 16px;
+  }
+}
