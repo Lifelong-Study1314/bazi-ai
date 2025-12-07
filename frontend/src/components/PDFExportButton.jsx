@@ -1,6 +1,6 @@
 /**
- * PDF Export Button Component - FIXED VERSION
- * Uses HTML rendering method (avoids Unicode encoding errors)
+ * PDF Export Button Component - FIXED v2
+ * AUTO-DETECTS correct container (no hardcoded selectors)
  * Supports multi-language with proper character rendering
  */
 
@@ -14,6 +14,7 @@ const PDFExportButton = ({
   insights = '',
   language = 'en',
   isDisabled = false,
+  containerSelector = null, // Allow custom container selector
 }) => {
   const { exportPDF, isExporting, error: exportError } = useExportPDF();
   const [showModal, setShowModal] = useState(false);
@@ -21,7 +22,6 @@ const PDFExportButton = ({
     `${userInfo.name || 'BAZI'}_Analysis`
   );
   const [showError, setShowError] = useState(false);
-  const containerRef = useRef(null);
 
   // Localization
   const labels = {
@@ -57,6 +57,53 @@ const PDFExportButton = ({
   const currentLabels = labels[language] || labels.en;
 
   /**
+   * Auto-detect the correct container to export
+   * Tries multiple selectors in order of preference
+   */
+  const findExportContainer = () => {
+    // If custom selector provided, use it first
+    if (containerSelector) {
+      const custom = document.querySelector(containerSelector);
+      if (custom) {
+        console.log('Using custom selector:', containerSelector);
+        return custom;
+      }
+    }
+
+    // Try common container selectors in order
+    const selectors = [
+      '.results-display',      // Our main results container
+      '.analysis-results',     // Alternative class name
+      '[data-export="true"]',  // Custom data attribute
+      '.insights-container',   // Common insights class
+      '#results',              // Common ID
+      'main',                  // HTML5 semantic element
+      '.main-content',         // Alternative main class
+      'body > div:last-child', // Last top-level div (common in React)
+    ];
+
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element && element.offsetHeight > 0) {
+        console.log('Found container with selector:', selector);
+        return element;
+      }
+    }
+
+    // If nothing found, log helpful error message
+    console.error(
+      'Could not find export container. Available selectors tried:',
+      selectors
+    );
+    console.error(
+      'DOM structure:',
+      document.body.innerHTML.substring(0, 500)
+    );
+    
+    return null;
+  };
+
+  /**
    * Handle PDF export using HTML rendering
    * This method renders the current page view to PDF
    */
@@ -64,12 +111,11 @@ const PDFExportButton = ({
     try {
       setShowError(false);
 
-      // Get the main content container to export
-      // This will include the analysis results visible on screen
-      const exportContainer = document.querySelector('.results-display');
-      
+      // Find the container to export
+      const exportContainer = findExportContainer();
+
       if (!exportContainer) {
-        console.error('Results container not found');
+        console.error('Export container not found');
         setShowError(true);
         return;
       }
