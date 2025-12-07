@@ -6,6 +6,17 @@ import './EnhancedInsightDisplay.css'
  * Parses and displays formatted BAZI insights with styled sections
  */
 const EnhancedInsightDisplay = ({ insights = '' }) => {
+  // Map section numbers to emojis
+  const sectionEmojis = {
+    1: '📊',
+    2: '💼',
+    3: '💕',
+    4: '🏥',
+    5: '🧠',
+    6: '🌙',
+    7: '🌟'
+  };
+
   const sections = useMemo(() => {
     if (!insights || insights.trim().length === 0) {
       return [];
@@ -15,7 +26,7 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
       const parsedSections = [];
       
       // Extract the intro (everything before first ###)
-      const introMatch = insights.match(/^([\s\S]*?)(###\s)/);
+      const introMatch = insights.match(/^([\s\S]*?)(###)/);
       const intro = introMatch ? introMatch[1] : '';
       
       if (intro && intro.trim().length > 0) {
@@ -27,25 +38,25 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         });
       }
 
-      // Parse sections with NEW format: ### [emoji] Title (no numbers)
-      // Matches: ### 📊 Title text
-      // Using a more flexible regex that captures emoji and title
-      const sectionRegex = /###\s+([\p{Emoji}])\s+([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
+      // Parse sections - matches both:
+      // ### 1. Title
+      // ### 📊 1. Title  
+      const sectionRegex = /###\s+(?:[\p{Emoji}]\s+)?(\d+)\.\s*([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
       let match;
 
       while ((match = sectionRegex.exec(insights)) !== null) {
-        const emoji = match[1];
-        const titleRaw = match[2].trim();
-        // Remove any leftover numbers from title
-        const title = titleRaw.replace(/^\d+\.\s*/, '').trim();
+        const sectionNum = parseInt(match[1]);
+        const title = match[2].trim();
         const content = match[3].trim();
+        const emoji = sectionEmojis[sectionNum] || '🔮';
 
         if (content.length > 0) {
           parsedSections.push({
             type: 'section',
             emoji: emoji,
             title: title,
-            content: content
+            content: content,
+            sectionNum: sectionNum
           });
         }
       }
