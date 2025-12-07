@@ -1,226 +1,279 @@
 /**
- * Custom hook for PDF export functionality
- * Uses jsPDF with unicode font support
+ * Enhanced PDF Export Hook with Chinese Character Support
+ * Uses jsPDF + html2canvas with proper font handling
+ * Supports Simplified Chinese, Traditional Chinese, and English
  */
 
+import { useState, useCallback } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import { 
+  initializeFonts, 
+  setSmartFont, 
+  detectLanguageFont, 
+  hasChinese,
+  wrapText 
+} from '../utils/font-utils';
+
+/**
+ * Hook for exporting analysis to PDF
+ * Handles multi-language PDFs with proper character encoding
+ */
 export const useExportPDF = () => {
-  const loadScript = async (src) => {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  };
+  const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const generatePDF = async (
-    content,
-    filename = 'BAZI_Analysis.pdf',
-    userInfo = {},
-    baziData = {}
-  ) => {
-    try {
-      // Load jsPDF
-      if (!window.jspdf) {
-        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  /**
+   * Generate PDF from HTML content
+   * @param {HTMLElement} htmlElement - Element to convert to PDF
+   * @param {string} filename - Output filename
+   * @param {object} options - Export options
+   * @returns {Promise<boolean>} - Success status
+   */
+  const generatePDFFromHTML = useCallback(
+    async (htmlElement, filename, options = {}) => {
+      try {
+        setIsExporting(true);
+        setError(null);
+
+        // Render HTML to canvas
+        const canvas = await html2canvas(htmlElement, {
+          scale: 2,
+          logging: false,
+          allowTaint: true,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          ...options.canvasOptions,
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Calculate dimensions
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        // Create PDF
+        const pdf = new jsPDF({
+          orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
+          unit: 'mm',
+          format: 'a4',
+        });
+
+        let yPosition = 0;
+        const pageHeight = pdf.internal.pageSize.getHeight();
+
+        // Add image, handling multi-page
+        while (yPosition < imgHeight) {
+          pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight);
+          yPosition += pageHeight;
+          if (yPosition < imgHeight) {
+            pdf.addPage();
+          }
+        }
+
+        // Download
+        pdf.save(filename);
+        return true;
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        setError(err.message);
+        return false;
+      } finally {
+        setIsExporting(false);
       }
+    },
+    []
+  );
 
-      const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-        compress: true
-      });
-      
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      const contentWidth = pageWidth - 2 * margin;
-      let yPosition = margin;
+  /**
+   * Generate PDF with structured text content
+   * Better for multi-language text with proper font handling
+   * @param {string} content - Text content to export
+   * @param {string} filename - Output filename
+   * @param {object} userData - User information for header
+   * @param {string} language - Language code (en, zh-CN, zh-TW)
+   * @returns {Promise<boolean>} - Success status
+   */
+  const generatePDFWithFonts = useCallback(
+    async (content, filename, userData, language = 'en') => {
+      try {
+        setIsExporting(true);
+        setError(null);
 
-      // Set font to a unicode-compatible font
-      // Using standard fonts that work better with jsPDF
-      pdf.setFont('helvetica');
+        // Initialize PDF
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
 
-      // Helper function to add text with wrapping
-      const addText = (text, fontSize = 11, isBold = false, color = [0, 0, 0]) => {
-        pdf.setFontSize(fontSize);
-        pdf.setTextColor(color[0], color[1], color[2]);
-        pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-        
-        // Split text into lines
-        const lines = pdf.splitTextToSize(String(text), contentWidth);
-        const lineHeight = fontSize * 0.35;
-        
-        lines.forEach((line, index) => {
-          if (yPosition > pageHeight - margin) {
+        // Initialize fonts
+        initializeFonts(pdf);
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 15;
+        const contentWidth = pageWidth - 2 * margin;
+        let yPosition = margin;
+
+        // Color definitions
+        const colors = {
+          gold: { r: 201, g: 169, b: 97 },
+          darkNavy: { r: 26, g: 32, b: 53 },
+          darkGray: { r: 102, g: 102, b: 102 },
+          black: { r: 0, g: 0, b: 0 },
+        };
+
+        // Helper to check page space
+        const checkPageSpace = (height) => {
+          if (yPosition + height > pageHeight - margin) {
             pdf.addPage();
             yPosition = margin;
           }
-          pdf.text(line, margin, yPosition);
-          yPosition += lineHeight + 1;
-        });
-      };
+        };
 
-      // Helper function for spacing
-      const addSpacing = (height = 5) => {
-        yPosition += height;
-        if (yPosition > pageHeight - margin) {
-          pdf.addPage();
-          yPosition = margin;
+        // Header
+        pdf.setFillColor(colors.darkNavy.r, colors.darkNavy.g, colors.darkNavy.b);
+        pdf.rect(0, 0, pageWidth, 30, 'F');
+
+        pdf.setTextColor(colors.gold.r, colors.gold.g, colors.gold.b);
+        pdf.setFontSize(24);
+        setSmartFont(pdf, 'BAZI Destiny Analysis');
+        pdf.text('BAZI Destiny Analysis', margin, 15);
+
+        yPosition = 35;
+
+        // User Information Section
+        if (userData) {
+          checkPageSpace(20);
+          pdf.setTextColor(colors.darkGray.r, colors.darkGray.g, colors.darkGray.b);
+          pdf.setFontSize(11);
+          setSmartFont(pdf, 'Birth Information');
+          pdf.text('Birth Information', margin, yPosition);
+          yPosition += 6;
+
+          // User data rows
+          const infoData = [
+            { label: 'Name', value: userData.name || 'N/A' },
+            { label: 'Date', value: userData.birthDate || 'N/A' },
+            { label: 'Time', value: userData.birthTime || 'N/A' },
+            { label: 'Gender', value: userData.gender || 'N/A' },
+          ];
+
+          pdf.setFontSize(10);
+          infoData.forEach((item) => {
+            checkPageSpace(5);
+            pdf.setTextColor(0, 0, 0);
+            setSmartFont(pdf, item.label);
+            pdf.text(`${item.label}:`, margin + 2, yPosition);
+            setSmartFont(pdf, item.value);
+            pdf.text(item.value, margin + 40, yPosition);
+            yPosition += 5;
+          });
+
+          yPosition += 5;
         }
-      };
 
-      // Helper function to draw a line
-      const drawLine = (color = [201, 169, 97]) => {
-        pdf.setDrawColor(color[0], color[1], color[2]);
-        pdf.setLineWidth(0.5);
-        pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-        yPosition += 4;
-      };
+        // Main Content Section
+        if (content) {
+          checkPageSpace(10);
+          pdf.setTextColor(colors.darkGray.r, colors.darkGray.g, colors.darkGray.b);
+          pdf.setFontSize(11);
+          setSmartFont(pdf, 'Analysis');
+          pdf.text('Analysis', margin, yPosition);
+          yPosition += 6;
 
-      // ===== HEADER =====
-      pdf.setFontSize(18);
-      pdf.setTextColor(201, 169, 97);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('BAZI Destiny Analysis Report', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 10;
+          // Split content into paragraphs
+          const paragraphs = content.split('\n\n');
 
-      pdf.setFontSize(10);
-      pdf.setTextColor(102, 102, 102);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Professional BAZI Chart Analysis', pageWidth / 2, yPosition, { align: 'center' });
-      yPosition += 8;
+          pdf.setFontSize(10);
+          paragraphs.forEach((paragraph) => {
+            if (!paragraph.trim()) return;
 
-      // Draw separator line
-      drawLine([201, 169, 97]);
-      addSpacing(2);
+            // Wrap text with proper language detection
+            const lines = pdf.splitTextToSize(paragraph, contentWidth);
 
-      // ===== PERSONAL INFORMATION =====
-      addText('PERSONAL INFORMATION', 12, true, [201, 169, 97]);
-      addSpacing(3);
+            lines.forEach((line) => {
+              checkPageSpace(5);
+              pdf.setTextColor(0, 0, 0);
+              setSmartFont(pdf, line);
+              pdf.text(line, margin, yPosition);
+              yPosition += 5;
+            });
 
-      addText(`Name: ${userInfo.name || 'N/A'}`, 10, false, [51, 51, 51]);
-      addText(`Birth Date: ${userInfo.birthDate || 'N/A'}`, 10, false, [51, 51, 51]);
-      addText(`Birth Time: ${userInfo.birthTime || 'N/A'}`, 10, false, [51, 51, 51]);
-      addText(`Gender: ${userInfo.gender || 'N/A'}`, 10, false, [51, 51, 51]);
+            yPosition += 2; // Paragraph spacing
+          });
+        }
 
-      addSpacing(8);
+        // Footer
+        checkPageSpace(10);
+        const pageCount = pdf.internal.pages.length - 1;
+        pdf.setFontSize(9);
+        pdf.setTextColor(colors.darkGray.r, colors.darkGray.g, colors.darkGray.b);
+        pdf.text(
+          `Generated: ${new Date().toLocaleString(language === 'zh-CN' ? 'zh-CN' : language === 'zh-TW' ? 'zh-TW' : 'en-US')}`,
+          margin,
+          pageHeight - 10
+        );
+        pdf.text(
+          `Page ${pdf.internal.getNumberOfPages()} of ${pageCount}`,
+          pageWidth - margin - 30,
+          pageHeight - 10
+        );
 
-      // ===== FOUR PILLARS =====
-      addText('FOUR PILLARS (Si Zhu)', 12, true, [201, 169, 97]);
-      addSpacing(3);
+        // Disclaimer
+        pdf.setFontSize(8);
+        pdf.setTextColor(150, 150, 150);
+        setSmartFont(pdf, 'Disclaimer');
+        pdf.text('This analysis is for reference only.', margin, pageHeight - 5);
 
-      if (baziData.four_pillars) {
-        const pillars = [
-          { label: 'Year:', key: 'year' },
-          { label: 'Month:', key: 'month' },
-          { label: 'Day:', key: 'day' },
-          { label: 'Hour:', key: 'hour' }
-        ];
+        // Save PDF
+        pdf.save(filename);
+        return true;
+      } catch (err) {
+        console.error('PDF generation error:', err);
+        setError(err.message);
+        return false;
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    []
+  );
 
-        pillars.forEach(({ label, key }) => {
-          const pillar = baziData.four_pillars[key];
-          if (pillar) {
-            const stemName = pillar.stem?.name_cn || pillar.stem?.name || '';
-            const branchName = pillar.branch?.name_cn || pillar.branch?.name || '';
-            const element = pillar.stem?.element || '';
-            const text = `${label} ${stemName} ${branchName} (${element})`;
-            addText(text, 10, false, [51, 51, 51]);
-          }
+  /**
+   * Main export function - choose method automatically
+   * @param {object} params - Export parameters
+   * @returns {Promise<boolean>} - Success status
+   */
+  const exportPDF = useCallback(
+    async (params) => {
+      const {
+        htmlElement, // For HTML2Canvas method
+        textContent, // For text-based method
+        filename = 'BAZI_Analysis.pdf',
+        userData = {},
+        language = 'en',
+        useHTML2Canvas = false, // Set true for complex layouts
+      } = params;
+
+      if (useHTML2Canvas && htmlElement) {
+        return generatePDFFromHTML(htmlElement, filename, {
+          canvasOptions: { scale: 2 },
         });
+      } else if (textContent) {
+        return generatePDFWithFonts(textContent, filename, userData, language);
+      } else {
+        setError('No content provided for PDF export');
+        return false;
       }
+    },
+    [generatePDFFromHTML, generatePDFWithFonts]
+  );
 
-      addSpacing(8);
-
-      // ===== DAY MASTER =====
-      addText('DAY MASTER (Ri Zhu)', 12, true, [201, 169, 97]);
-      addSpacing(3);
-
-      const dayMasterStem = baziData.day_master?.stem_cn || baziData.day_master?.stem || 'N/A';
-      const dayMasterElement = baziData.day_master?.element || 'N/A';
-      const dayMasterYinYang = baziData.day_master?.yin_yang || 'N/A';
-      
-      addText(`${dayMasterStem} (${dayMasterElement}, ${dayMasterYinYang})`, 11, true, [201, 169, 97]);
-
-      addSpacing(8);
-
-      // ===== FIVE ELEMENTS =====
-      addText('FIVE ELEMENTS ANALYSIS (Wu Xing)', 12, true, [201, 169, 97]);
-      addSpacing(3);
-
-      if (baziData.elements?.counts) {
-        let elementStr = 'Elements: ';
-        Object.entries(baziData.elements.counts).forEach(([elem, count]) => {
-          elementStr += `${elem}(${count}) `;
-        });
-        addText(elementStr, 10, false, [51, 51, 51]);
-      }
-
-      if (baziData.elements?.analysis?.balance) {
-        addText(`Balance Status: ${baziData.elements.analysis.balance}`, 10, false, [51, 51, 51]);
-      }
-
-      addSpacing(8);
-
-      // ===== DETAILED ANALYSIS =====
-      if (content && content.trim().length > 0) {
-        addText('DETAILED ANALYSIS', 12, true, [201, 169, 97]);
-        addSpacing(3);
-
-        // Parse and format the insights
-        const lines = content.split('\n');
-        
-        lines.forEach(line => {
-          const trimmed = line.trim();
-          
-          if (trimmed.startsWith('###')) {
-            // Section title - extract just the text after ###
-            const match = trimmed.match(/###\s+\d+\.?\s+(.+)/);
-            if (match) {
-              addSpacing(3);
-              addText(match[1].trim(), 11, true, [51, 51, 51]);
-              addSpacing(2);
-            }
-          } else if (trimmed && !trimmed.startsWith('###')) {
-            // Content - just regular text
-            if (trimmed.length > 0) {
-              addText(trimmed, 9, false, [68, 68, 68]);
-              addSpacing(1);
-            }
-          }
-        });
-      }
-
-      addSpacing(5);
-
-      // ===== FOOTER =====
-      yPosition = pageHeight - margin - 12;
-      pdf.setDrawColor(201, 169, 97);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-      yPosition += 4;
-
-      pdf.setFontSize(8);
-      pdf.setTextColor(153, 153, 153);
-      pdf.setFont('helvetica', 'normal');
-      const timestamp = new Date().toLocaleString();
-      pdf.text(`Generated on: ${timestamp}`, margin, yPosition);
-      yPosition += 3;
-      pdf.text('This report is generated by AI-powered BAZI analysis system for reference only.', margin, yPosition);
-
-      // Save the PDF
-      pdf.save(filename);
-      console.log('PDF generated successfully');
-      return true;
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert(`Error generating PDF: ${error.message}`);
-      return false;
-    }
+  return {
+    exportPDF,
+    isExporting,
+    error,
   };
-
-  return { generatePDF };
 };
