@@ -14,29 +14,33 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
     try {
       const parsedSections = [];
       
-      // Extract the intro (everything before first ###)
-      const introMatch = insights.match(/^([\s\S]*?)(###\s+\d+\.)/);
+      // Extract the intro (everything before first ### with emoji)
+      const introMatch = insights.match(/^([\s\S]*?)(###\s+[\p{Emoji}])/u);
       const intro = introMatch ? introMatch[1] : '';
       
       if (intro && intro.trim().length > 0) {
         parsedSections.push({
           type: 'intro',
           content: intro.trim(),
-          title: 'Overview'
+          title: 'Overview',
+          emoji: '🔮'
         });
       }
 
-      // Now split by ### markers
-      const sectionRegex = /###\s+\d+\.\s*([^\n]+)\n([\s\S]*?)(?=###\s+\d+\.|$)/g;
+      // Parse sections with emoji: ### 📊 1. Title
+      // Regex: ### [emoji] [optional number]. [title]
+      const sectionRegex = /###\s+([\p{Emoji}])\s+(?:\d+\.\s*)?([^\n]+)\n([\s\S]*?)(?=###\s+[\p{Emoji}]|$)/gu;
       let match;
 
       while ((match = sectionRegex.exec(insights)) !== null) {
-        const title = match[1].trim();
-        const content = match[2].trim();
+        const emoji = match[1].trim();
+        const title = match[2].trim();
+        const content = match[3].trim();
 
         if (content.length > 0) {
           parsedSections.push({
             type: 'section',
+            emoji: emoji,
             title: title,
             content: content
           });
@@ -48,6 +52,7 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         parsedSections.push({
           type: 'raw',
           title: 'Analysis',
+          emoji: '🔮',
           content: insights.trim()
         });
       }
@@ -58,45 +63,25 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
       return [{
         type: 'raw',
         title: 'Analysis',
+        emoji: '🔮',
         content: insights
       }];
     }
   }, [insights]);
 
-  const getSectionIcon = (title) => {
-    const icons = {
-      'Chart Structure': '📊',
-      'Career': '💼',
-      'Finance': '💰',
-      'Relationships': '💑',
-      'Marriage': '💍',
-      'Health': '🏥',
-      'Wellness': '🧘',
-      'Personality': '🎭',
-      'Character': '✨',
-      'Luck Cycles': '🔄',
-      'Timing': '⏰',
-      'Life Guidance': '🧭',
-      'Development': '🚀'
+  // Color scheme by emoji
+  const getEmojiColor = (emoji) => {
+    const colorMap = {
+      '📊': 'section-blue',      // Chart Structure
+      '💼': 'section-green',     // Career & Finance
+      '💕': 'section-pink',      // Relationships & Marriage
+      '🏥': 'section-green',     // Health & Wellness
+      '🧠': 'section-purple',    // Personality & Character
+      '🌙': 'section-orange',    // Luck Cycles & Timing
+      '🌟': 'section-amber',     // Life Guidance & Development
+      '🔮': 'section-teal'       // Default/Overview
     };
-
-    for (const [key, icon] of Object.entries(icons)) {
-      if (title.includes(key)) return icon;
-    }
-    return '📌';
-  };
-
-  const getSectionColor = (index) => {
-    const colors = [
-      'section-blue',
-      'section-green',
-      'section-purple',
-      'section-orange',
-      'section-pink',
-      'section-teal',
-      'section-amber'
-    ];
-    return colors[index % colors.length];
+    return colorMap[emoji] || 'section-teal';
   };
 
   if (sections.length === 0) {
@@ -120,12 +105,12 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         {sections.map((section, index) => (
           <div
             key={index}
-            className={`insight-section ${getSectionColor(index)} ${
+            className={`insight-section ${getEmojiColor(section.emoji)} ${
               section.type === 'intro' ? 'intro-section' : ''
             } ${section.type === 'raw' ? 'raw-section' : ''}`}
           >
             <div className="section-header">
-              <span className="section-icon">{getSectionIcon(section.title)}</span>
+              <span className="section-icon">{section.emoji}</span>
               <h3>{section.title}</h3>
             </div>
 
@@ -167,10 +152,8 @@ const FormattedContent = ({ content }) => {
           );
         }
 
-        // Bullet points - IMPROVED regex to be more flexible
-        // Matches: "- text", "* text", "• text", or lines starting with these characters
+        // Bullet points - handle various formats
         if (/^[-*•]\s*/.test(trimmed)) {
-          // Remove the bullet character and optional space
           const bulletText = trimmed.replace(/^[-*•]\s*/, '');
           return (
             <div key={i} className="bullet-point">
