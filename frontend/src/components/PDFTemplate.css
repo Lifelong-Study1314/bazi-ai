@@ -1,0 +1,210 @@
+/* PDF Template Styles - Optimized for Print */
+
+#pdf-content {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px;
+  background: white;
+  color: #333;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* Header */
+.pdf-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #c9a961;
+}
+
+.pdf-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 10px 0;
+  letter-spacing: 1px;
+}
+
+.pdf-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Sections */
+.pdf-section {
+  margin-bottom: 25px;
+  page-break-inside: avoid;
+}
+
+.pdf-section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #c9a961;
+  margin: 0 0 15px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pdf-subsection-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 12px 0 8px 0;
+}
+
+/* Tables */
+.pdf-info-table,
+.pdf-pillars-table,
+.pdf-elements-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 15px;
+}
+
+.pdf-info-table td,
+.pdf-pillars-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.pdf-info-table .label,
+.pdf-pillars-table .label {
+  font-weight: 600;
+  width: 30%;
+  color: #555;
+}
+
+.pdf-info-table .value,
+.pdf-pillars-table .value {
+  color: #333;
+}
+
+/* Elements Table */
+.pdf-elements-table td {
+  padding: 15px 8px;
+  text-align: center;
+  border: 1px solid #ddd;
+  position: relative;
+}
+
+.element-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: white;
+}
+
+.element-cell.wood {
+  background-color: #4a7c59;
+}
+
+.element-cell.fire {
+  background-color: #c44536;
+}
+
+.element-cell.earth {
+  background-color: #a67c52;
+}
+
+.element-cell.metal {
+  background-color: #6b7280;
+}
+
+.element-cell.water {
+  background-color: #1e5a96;
+}
+
+.element-name {
+  font-size: 12px;
+}
+
+.element-count {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+/* Info Text */
+.pdf-info {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-left: 3px solid #c9a961;
+}
+
+.pdf-info p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* Insights Content */
+.pdf-insights-content {
+  margin-top: 15px;
+}
+
+.pdf-insight-section {
+  margin-bottom: 15px;
+  page-break-inside: avoid;
+}
+
+.pdf-content-line {
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+}
+
+/* Footer */
+.pdf-footer {
+  text-align: center;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 2px solid #c9a961;
+  font-size: 12px;
+  color: #888;
+}
+
+.pdf-footer p {
+  margin: 5px 0;
+}
+
+.disclaimer {
+  font-style: italic;
+  color: #999;
+  margin-top: 10px !important;
+}
+
+/* Print Media Query */
+@media print {
+  #pdf-content {
+    padding: 20px;
+    max-width: 100%;
+  }
+
+  .pdf-section {
+    page-break-inside: avoid;
+  }
+
+  .pdf-insight-section {
+    page-break-inside: avoid;
+  }
+}
+
+/* Hide scrollbars in PDF container */
+#pdf-content {
+  overflow-y: auto;
+  max-height: 90vh;
+}
+
+/* Ensure tables don't break across pages */
+.pdf-info-table,
+.pdf-pillars-table,
+.pdf-elements-table {
+  page-break-inside: avoid;
+}
