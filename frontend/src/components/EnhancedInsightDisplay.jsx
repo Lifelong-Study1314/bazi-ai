@@ -25,8 +25,8 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
     try {
       const parsedSections = [];
       
-      // Extract the intro (everything before first ###)
-      const introMatch = insights.match(/^([\s\S]*?)(###)/);
+      // Extract the intro (everything before first ### with a number)
+      const introMatch = insights.match(/^([\s\S]*?)(###\s+\d)/);
       const intro = introMatch ? introMatch[1] : '';
       
       if (intro && intro.trim().length > 0) {
@@ -38,10 +38,9 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         });
       }
 
-      // Parse sections - matches both:
-      // ### 1. Title
-      // ### 📊 1. Title  
-      const sectionRegex = /###\s+(?:[\p{Emoji}]\s+)?(\d+)\.\s*([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
+      // Parse sections - more flexible regex
+      // Matches: ### 1. Title or ### 1 Title or ### 1.Title
+      const sectionRegex = /###\s+(\d+)\.?\s*([^\n]+)\n([\s\S]*?)(?=###\s+\d|$)/g;
       let match;
 
       while ((match = sectionRegex.exec(insights)) !== null) {
