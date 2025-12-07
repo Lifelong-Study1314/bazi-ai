@@ -1,5 +1,6 @@
 /**
  * PDF Template Component - Professional Layout
+ * Hidden from DOM, only rendered for PDF export
  */
 const PDFTemplate = ({ 
   userInfo = {}, 
@@ -13,118 +14,132 @@ const PDFTemplate = ({
     return 'BAZI Destiny Analysis Report';
   };
 
-  const renderContent = () => {
-    return (
-      <div id="pdf-content" style={styles.container}>
-        <style>{pdfStyles}</style>
-        
-        {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.title}>{getTitle()}</h1>
-          <p style={styles.subtitle}>Professional BAZI Chart Analysis</p>
-        </div>
+  return (
+    <div 
+      id="pdf-content" 
+      style={{
+        position: 'fixed',
+        left: '-9999px',
+        top: '-9999px',
+        width: '210mm',
+        minHeight: '297mm',
+        backgroundColor: '#ffffff',
+        color: '#333',
+        fontSize: '11pt',
+        lineHeight: '1.6',
+        fontFamily: "'Segoe UI', 'Arial', sans-serif",
+        padding: '20mm',
+        zIndex: '-1',
+        visibility: 'hidden',
+        pointerEvents: 'none'
+      }}
+    >
+      <style>{pdfStyles}</style>
+      
+      {/* Header */}
+      <div style={styles.header}>
+        <h1 style={styles.title}>{getTitle()}</h1>
+        <p style={styles.subtitle}>Professional BAZI Chart Analysis</p>
+      </div>
 
-        {/* User Info */}
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>📋 Personal Information</h2>
-          <table style={styles.table}>
-            <tbody>
-              <tr>
-                <td style={styles.tableLabel}>Name:</td>
-                <td style={styles.tableValue}>{userInfo.name || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td style={styles.tableLabel}>Birth Date:</td>
-                <td style={styles.tableValue}>{userInfo.birthDate || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td style={styles.tableLabel}>Birth Time:</td>
-                <td style={styles.tableValue}>{userInfo.birthTime || 'N/A'}</td>
-              </tr>
-              <tr>
-                <td style={styles.tableLabel}>Gender:</td>
-                <td style={styles.tableValue}>{userInfo.gender || 'N/A'}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      {/* User Info */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>📋 Personal Information</h2>
+        <table style={styles.table}>
+          <tbody>
+            <tr>
+              <td style={styles.tableLabel}>Name:</td>
+              <td style={styles.tableValue}>{userInfo.name || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style={styles.tableLabel}>Birth Date:</td>
+              <td style={styles.tableValue}>{userInfo.birthDate || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style={styles.tableLabel}>Birth Time:</td>
+              <td style={styles.tableValue}>{userInfo.birthTime || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style={styles.tableLabel}>Gender:</td>
+              <td style={styles.tableValue}>{userInfo.gender || 'N/A'}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-        {/* Four Pillars */}
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>☯️ Four Pillars (四柱八字)</h2>
-          <table style={styles.table}>
-            <tbody>
-              {baziData.four_pillars && Object.entries(baziData.four_pillars).map(([key, pillar]) => (
-                <tr key={key}>
-                  <td style={styles.tableLabel}>
-                    {key === 'year' ? 'Year' : key === 'month' ? 'Month' : key === 'day' ? 'Day' : 'Hour'}:
-                  </td>
-                  <td style={styles.tableValue}>
-                    {pillar.stem?.name_cn || ''}{pillar.branch?.name_cn || ''} ({pillar.stem?.element || ''})
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Four Pillars */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>☯️ Four Pillars (四柱八字)</h2>
+        <table style={styles.table}>
+          <tbody>
+            {baziData.four_pillars && Object.entries(baziData.four_pillars).map(([key, pillar]) => (
+              <tr key={key}>
+                <td style={styles.tableLabel}>
+                  {key === 'year' ? 'Year' : key === 'month' ? 'Month' : key === 'day' ? 'Day' : 'Hour'}:
+                </td>
+                <td style={styles.tableValue}>
+                  {pillar.stem?.name_cn || ''}{pillar.branch?.name_cn || ''} ({pillar.stem?.element || ''})
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Day Master */}
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>🎯 Day Master (日主)</h2>
-          <div style={styles.dayMasterCard}>
-            <div>
-              <p style={styles.dayMasterName}>
-                {baziData.day_master?.stem_cn || 'N/A'}
-              </p>
-              <p style={styles.dayMasterElement}>
-                {baziData.day_master?.element || 'N/A'} ({baziData.day_master?.yin_yang || 'N/A'})
-              </p>
-            </div>
+      {/* Day Master */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>🎯 Day Master (日主)</h2>
+        <div style={styles.dayMasterCard}>
+          <div>
+            <p style={styles.dayMasterName}>
+              {baziData.day_master?.stem_cn || 'N/A'}
+            </p>
+            <p style={styles.dayMasterElement}>
+              {baziData.day_master?.element || 'N/A'} ({baziData.day_master?.yin_yang || 'N/A'})
+            </p>
           </div>
-        </div>
-
-        {/* Elements */}
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>🔥 Five Elements Analysis (五行分析)</h2>
-          <table style={styles.elementsTable}>
-            <tbody>
-              <tr>
-                {baziData.elements && Object.entries(baziData.elements.counts || {}).map(([elem, count]) => (
-                  <td key={elem} style={styles.elementCell}>
-                    <div style={styles.elementCount}>{count}</div>
-                    <div style={styles.elementName}>{elem}</div>
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
-          <p style={styles.balanceText}>
-            <strong>Balance Status:</strong> {baziData.elements?.analysis?.balance || 'Unknown'}
-          </p>
-        </div>
-
-        {/* Insights */}
-        <div style={styles.section}>
-          <h2 style={styles.sectionTitle}>📊 Detailed Analysis</h2>
-          <div style={styles.insightsContent}>
-            {renderInsights(insights)}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div style={styles.footer}>
-          <p style={styles.footerText}>
-            Generated on: {new Date().toLocaleString()}
-          </p>
-          <p style={styles.footerDisclaimer}>
-            This report is generated by an AI-powered BAZI analysis system for reference only.
-          </p>
         </div>
       </div>
-    );
-  };
 
-  return renderContent();
+      {/* Elements */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>🔥 Five Elements Analysis (五行分析)</h2>
+        <table style={styles.elementsTable}>
+          <tbody>
+            <tr>
+              {baziData.elements && Object.entries(baziData.elements.counts || {}).map(([elem, count]) => (
+                <td key={elem} style={styles.elementCell}>
+                  <div style={styles.elementCount}>{count}</div>
+                  <div style={styles.elementName}>{elem}</div>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
+        <p style={styles.balanceText}>
+          <strong>Balance Status:</strong> {baziData.elements?.analysis?.balance || 'Unknown'}
+        </p>
+      </div>
+
+      {/* Insights */}
+      <div style={styles.section}>
+        <h2 style={styles.sectionTitle}>📊 Detailed Analysis</h2>
+        <div style={styles.insightsContent}>
+          {renderInsights(insights)}
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={styles.footer}>
+        <p style={styles.footerText}>
+          Generated on: {new Date().toLocaleString()}
+        </p>
+        <p style={styles.footerDisclaimer}>
+          This report is generated by an AI-powered BAZI analysis system for reference only.
+        </p>
+      </div>
+    </div>
+  );
 };
 
 // Comprehensive PDF Styles
@@ -152,19 +167,6 @@ const pdfStyles = `
 `;
 
 const styles = {
-  container: {
-    display: 'block',
-    width: '210mm',
-    minHeight: '297mm',
-    backgroundColor: '#ffffff',
-    color: '#333',
-    fontSize: '11pt',
-    lineHeight: '1.6',
-    fontFamily: "'Segoe UI', 'Arial', sans-serif",
-    padding: '20mm',
-    margin: '0 auto'
-  },
-  
   header: {
     textAlign: 'center',
     marginBottom: '20px',
