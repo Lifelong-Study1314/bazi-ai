@@ -1,6 +1,6 @@
 /**
  * PDF Template Component - Professional Layout
- * Hidden from DOM, only rendered for PDF export
+ * Hidden from DOM until needed for PDF export
  */
 const PDFTemplate = ({ 
   userInfo = {}, 
@@ -24,18 +24,17 @@ const PDFTemplate = ({
         width: '210mm',
         minHeight: '297mm',
         backgroundColor: '#ffffff',
-        color: '#333',
+        color: '#333333',
         fontSize: '11pt',
         lineHeight: '1.6',
-        fontFamily: "'Segoe UI', 'Arial', sans-serif",
+        fontFamily: "Arial, sans-serif",
         padding: '20mm',
-        zIndex: '-1',
+        zIndex: '-9999',
         visibility: 'hidden',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        boxSizing: 'border-box'
       }}
     >
-      <style>{pdfStyles}</style>
-      
       {/* Header */}
       <div style={styles.header}>
         <h1 style={styles.title}>{getTitle()}</h1>
@@ -69,7 +68,7 @@ const PDFTemplate = ({
 
       {/* Four Pillars */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>☯️ Four Pillars (四柱八字)</h2>
+        <h2 style={styles.sectionTitle}>Four Pillars (四柱八字)</h2>
         <table style={styles.table}>
           <tbody>
             {baziData.four_pillars && Object.entries(baziData.four_pillars).map(([key, pillar]) => (
@@ -88,22 +87,20 @@ const PDFTemplate = ({
 
       {/* Day Master */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>🎯 Day Master (日主)</h2>
+        <h2 style={styles.sectionTitle}>Day Master (日主)</h2>
         <div style={styles.dayMasterCard}>
-          <div>
-            <p style={styles.dayMasterName}>
-              {baziData.day_master?.stem_cn || 'N/A'}
-            </p>
-            <p style={styles.dayMasterElement}>
-              {baziData.day_master?.element || 'N/A'} ({baziData.day_master?.yin_yang || 'N/A'})
-            </p>
-          </div>
+          <p style={styles.dayMasterName}>
+            {baziData.day_master?.stem_cn || 'N/A'}
+          </p>
+          <p style={styles.dayMasterElement}>
+            {baziData.day_master?.element || 'N/A'} ({baziData.day_master?.yin_yang || 'N/A'})
+          </p>
         </div>
       </div>
 
       {/* Elements */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>🔥 Five Elements Analysis (五行分析)</h2>
+        <h2 style={styles.sectionTitle}>Five Elements Analysis (五行分析)</h2>
         <table style={styles.elementsTable}>
           <tbody>
             <tr>
@@ -123,7 +120,7 @@ const PDFTemplate = ({
 
       {/* Insights */}
       <div style={styles.section}>
-        <h2 style={styles.sectionTitle}>📊 Detailed Analysis</h2>
+        <h2 style={styles.sectionTitle}>Detailed Analysis</h2>
         <div style={styles.insightsContent}>
           {renderInsights(insights)}
         </div>
@@ -142,30 +139,6 @@ const PDFTemplate = ({
   );
 };
 
-// Comprehensive PDF Styles
-const pdfStyles = `
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', 'Arial', sans-serif;
-    color: #333;
-  }
-  
-  * {
-    box-sizing: border-box;
-  }
-  
-  p {
-    margin: 0 0 10px 0;
-    line-height: 1.6;
-  }
-  
-  strong {
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-`;
-
 const styles = {
   header: {
     textAlign: 'center',
@@ -176,15 +149,14 @@ const styles = {
   
   title: {
     fontSize: '24pt',
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#c9a961',
-    margin: '0 0 5px 0',
-    letterSpacing: '1px'
+    margin: '0 0 5px 0'
   },
   
   subtitle: {
     fontSize: '10pt',
-    color: '#666',
+    color: '#666666',
     margin: '0',
     fontStyle: 'italic'
   },
@@ -196,7 +168,7 @@ const styles = {
   
   sectionTitle: {
     fontSize: '13pt',
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#c9a961',
     margin: '15px 0 10px 0',
     paddingBottom: '5px',
@@ -210,7 +182,7 @@ const styles = {
   },
   
   tableLabel: {
-    fontWeight: '600',
+    fontWeight: 'bold',
     width: '25%',
     padding: '8px',
     backgroundColor: '#f5f5f5',
@@ -221,7 +193,7 @@ const styles = {
   
   tableValue: {
     padding: '8px',
-    color: '#333',
+    color: '#333333',
     fontSize: '10pt',
     borderBottom: '1px solid #e0e0e0'
   },
@@ -235,14 +207,14 @@ const styles = {
   
   dayMasterName: {
     fontSize: '18pt',
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#c9a961',
     margin: '0 0 5px 0'
   },
   
   dayMasterElement: {
     fontSize: '10pt',
-    color: '#666',
+    color: '#666666',
     margin: '0'
   },
   
@@ -263,20 +235,20 @@ const styles = {
   
   elementCount: {
     fontSize: '16pt',
-    fontWeight: '700',
+    fontWeight: 'bold',
     color: '#c9a961',
     marginBottom: '5px'
   },
   
   elementName: {
     fontSize: '9pt',
-    fontWeight: '600',
-    color: '#333'
+    fontWeight: 'bold',
+    color: '#333333'
   },
   
   balanceText: {
     fontSize: '10pt',
-    color: '#666',
+    color: '#666666',
     padding: '10px',
     backgroundColor: '#fafafa',
     borderRadius: '4px',
@@ -286,7 +258,7 @@ const styles = {
   insightsContent: {
     fontSize: '10pt',
     lineHeight: '1.8',
-    color: '#444'
+    color: '#444444'
   },
   
   footer: {
@@ -295,18 +267,18 @@ const styles = {
     borderTop: '2px solid #c9a961',
     textAlign: 'center',
     fontSize: '9pt',
-    color: '#999'
+    color: '#999999'
   },
   
   footerText: {
     margin: '0 0 5px 0',
-    color: '#666'
+    color: '#666666'
   },
   
   footerDisclaimer: {
     margin: '0',
     fontStyle: 'italic',
-    color: '#999'
+    color: '#999999'
   }
 };
 
@@ -346,11 +318,11 @@ function renderInsights(insights) {
   return (
     <div>
       {sections.map((section, idx) => (
-        <div key={idx} style={{ marginBottom: '12px', pageBreakInside: 'avoid' }}>
+        <div key={idx} style={{ marginBottom: '12px' }}>
           <h3 style={{
             fontSize: '11pt',
-            fontWeight: '600',
-            color: '#333',
+            fontWeight: 'bold',
+            color: '#333333',
             margin: '10px 0 5px 0',
             paddingBottom: '3px',
             borderBottom: '1px solid #ddd'
@@ -360,10 +332,9 @@ function renderInsights(insights) {
           <p style={{
             fontSize: '10pt',
             lineHeight: '1.6',
-            color: '#444',
+            color: '#444444',
             margin: '5px 0 0 0',
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word'
+            whiteSpace: 'pre-wrap'
           }}>
             {section.content}
           </p>

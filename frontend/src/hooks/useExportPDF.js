@@ -39,22 +39,59 @@ export const useExportPDF = () => {
         return false;
       }
 
-      // Show the hidden PDF template
+      // Temporarily make the element visible for capture
+      const originalStyle = {
+        position: element.style.position,
+        left: element.style.left,
+        top: element.style.top,
+        visibility: element.style.visibility,
+        pointerEvents: element.style.pointerEvents,
+        zIndex: element.style.zIndex,
+        display: element.style.display
+      };
+
+      // Make it visible temporarily
+      element.style.position = 'absolute';
+      element.style.left = '0';
+      element.style.top = '0';
+      element.style.visibility = 'visible';
+      element.style.pointerEvents = 'none';
+      element.style.zIndex = '-9999';
       element.style.display = 'block';
+
+      // Add to DOM if not already there (it should be)
+      if (!document.body.contains(element)) {
+        document.body.appendChild(element);
+      }
 
       const { html2canvas } = window;
       const { jsPDF } = window.jspdf;
 
-      // Capture the element as canvas
+      console.log('Starting PDF capture...');
+
+      // Capture the element as canvas with better settings
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        allowTaint: true,
+        foreignObjectRendering: true,
+        imageTimeout: 5000,
+        windowHeight: element.scrollHeight,
+        windowWidth: element.scrollWidth
       });
 
-      // Hide the template again
-      element.style.display = 'none';
+      console.log('Canvas captured successfully');
+
+      // Restore original styles
+      element.style.position = originalStyle.position;
+      element.style.left = originalStyle.left;
+      element.style.top = originalStyle.top;
+      element.style.visibility = originalStyle.visibility;
+      element.style.pointerEvents = originalStyle.pointerEvents;
+      element.style.zIndex = originalStyle.zIndex;
+      element.style.display = originalStyle.display;
 
       // Create PDF from canvas
       const imgWidth = 210; // A4 width in mm
@@ -79,10 +116,11 @@ export const useExportPDF = () => {
 
       // Save the PDF
       pdf.save(filename);
+      console.log('PDF generated successfully');
       return true;
     } catch (error) {
       console.error('PDF generation error:', error);
-      alert('Error generating PDF. Please try again. Check console for details.');
+      alert(`Error generating PDF: ${error.message}`);
       return false;
     }
   };
