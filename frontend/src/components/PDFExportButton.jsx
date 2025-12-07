@@ -1,10 +1,10 @@
 /**
- * PDF Export Button Component - FIXED v2
- * AUTO-DETECTS correct container (no hardcoded selectors)
- * Supports multi-language with proper character rendering
+ * PDF Export Button Component - DOCUMENT VERSION
+ * Exports text content as a clean, readable document PDF
+ * NOT a screenshot (fixes readability issues)
  */
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useExportPDF } from '../hooks/useExportPDF';
 import './PDFExportButton.css';
 
@@ -14,7 +14,6 @@ const PDFExportButton = ({
   insights = '',
   language = 'en',
   isDisabled = false,
-  containerSelector = null, // Allow custom container selector
 }) => {
   const { exportPDF, isExporting, error: exportError } = useExportPDF();
   const [showModal, setShowModal] = useState(false);
@@ -57,77 +56,59 @@ const PDFExportButton = ({
   const currentLabels = labels[language] || labels.en;
 
   /**
-   * Auto-detect the correct container to export
-   * Tries multiple selectors in order of preference
-   */
-  const findExportContainer = () => {
-    // If custom selector provided, use it first
-    if (containerSelector) {
-      const custom = document.querySelector(containerSelector);
-      if (custom) {
-        console.log('Using custom selector:', containerSelector);
-        return custom;
-      }
-    }
-
-    // Try common container selectors in order
-    const selectors = [
-      '.results-display',      // Our main results container
-      '.analysis-results',     // Alternative class name
-      '[data-export="true"]',  // Custom data attribute
-      '.insights-container',   // Common insights class
-      '#results',              // Common ID
-      'main',                  // HTML5 semantic element
-      '.main-content',         // Alternative main class
-      'body > div:last-child', // Last top-level div (common in React)
-    ];
-
-    for (const selector of selectors) {
-      const element = document.querySelector(selector);
-      if (element && element.offsetHeight > 0) {
-        console.log('Found container with selector:', selector);
-        return element;
-      }
-    }
-
-    // If nothing found, log helpful error message
-    console.error(
-      'Could not find export container. Available selectors tried:',
-      selectors
-    );
-    console.error(
-      'DOM structure:',
-      document.body.innerHTML.substring(0, 500)
-    );
-    
-    return null;
-  };
-
-  /**
-   * Handle PDF export using HTML rendering
-   * This method renders the current page view to PDF
+   * Handle PDF export
+   * Exports text content as a clean document, not a screenshot
    */
   const handleExport = async () => {
     try {
       setShowError(false);
 
-      // Find the container to export
-      const exportContainer = findExportContainer();
-
-      if (!exportContainer) {
-        console.error('Export container not found');
-        setShowError(true);
-        return;
-      }
-
       // Create filename with timestamp
       const timestamp = new Date().getTime();
       const filename = `${customName}_${timestamp}.pdf`;
 
-      // Export PDF
+      // Prepare content text (extract from insights)
+      let contentText = '';
+
+      // Add Five Elements Summary
+      if (baziData.elements) {
+        contentText += '五行平衡 / Five Elements Balance\n';
+        contentText += '---\n\n';
+        const elements = baziData.elements;
+        contentText += `木 (Wood): ${elements.wood || 0}\n`;
+        contentText += `火 (Fire): ${elements.fire || 0}\n`;
+        contentText += `土 (Earth): ${elements.earth || 0}\n`;
+        contentText += `金 (Metal): ${elements.metal || 0}\n`;
+        contentText += `水 (Water): ${elements.water || 0}\n\n`;
+      }
+
+      // Add Four Pillars if available
+      if (baziData.pillars) {
+        contentText += '四柱 / Four Pillars\n';
+        contentText += '---\n\n';
+        contentText += `年 (Year): ${baziData.pillars.year || 'N/A'}\n`;
+        contentText += `月 (Month): ${baziData.pillars.month || 'N/A'}\n`;
+        contentText += `日 (Day): ${baziData.pillars.day || 'N/A'}\n`;
+        contentText += `时 (Hour): ${baziData.pillars.hour || 'N/A'}\n\n`;
+      }
+
+      // Add insights/analysis
+      if (insights) {
+        contentText += '分析 / Analysis\n';
+        contentText += '---\n\n';
+        contentText += insights;
+      }
+
+      // Export PDF with text content
       const success = await exportPDF({
-        htmlElement: exportContainer,
+        textContent: contentText,
         filename,
+        userData: {
+          name: userInfo.name || 'Unknown',
+          birthDate: baziData.birthDate || 'N/A',
+          birthTime: baziData.birthTime || 'N/A',
+          gender: baziData.gender || 'N/A',
+        },
         language,
       });
 
