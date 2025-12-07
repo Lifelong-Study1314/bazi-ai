@@ -1,10 +1,10 @@
 /**
- * PDF Export Button Component
- * Integrates Chinese-compatible PDF export into analysis results
- * Supports multi-language with proper character encoding
+ * PDF Export Button Component - FIXED VERSION
+ * Uses HTML rendering method (avoids Unicode encoding errors)
+ * Supports multi-language with proper character rendering
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useExportPDF } from '../hooks/useExportPDF';
 import './PDFExportButton.css';
 
@@ -21,6 +21,7 @@ const PDFExportButton = ({
     `${userInfo.name || 'BAZI'}_Analysis`
   );
   const [showError, setShowError] = useState(false);
+  const containerRef = useRef(null);
 
   // Localization
   const labels = {
@@ -56,61 +57,32 @@ const PDFExportButton = ({
   const currentLabels = labels[language] || labels.en;
 
   /**
-   * Handle PDF export
-   * Combines user data, bazi info, and insights into structured PDF
+   * Handle PDF export using HTML rendering
+   * This method renders the current page view to PDF
    */
   const handleExport = async () => {
     try {
       setShowError(false);
 
-      // Create formatted content for PDF
+      // Get the main content container to export
+      // This will include the analysis results visible on screen
+      const exportContainer = document.querySelector('.results-display');
+      
+      if (!exportContainer) {
+        console.error('Results container not found');
+        setShowError(true);
+        return;
+      }
+
+      // Create filename with timestamp
       const timestamp = new Date().getTime();
       const filename = `${customName}_${timestamp}.pdf`;
 
-      // Prepare user data for PDF
-      const pdfUserData = {
-        name: userInfo.name || 'Unknown',
-        birthDate: baziData.birthDate || 'N/A',
-        birthTime: baziData.birthTime || 'N/A',
-        gender: baziData.gender || 'N/A',
-      };
-
-      // Prepare structured text content
-      let pdfContent = '';
-
-      // Add Five Elements Summary
-      if (baziData.elements) {
-        pdfContent += 'Five Elements Balance:\n\n';
-        const elements = baziData.elements;
-        pdfContent += `Wood: ${elements.wood || 0}\n`;
-        pdfContent += `Fire: ${elements.fire || 0}\n`;
-        pdfContent += `Earth: ${elements.earth || 0}\n`;
-        pdfContent += `Metal: ${elements.metal || 0}\n`;
-        pdfContent += `Water: ${elements.water || 0}\n\n`;
-      }
-
-      // Add Four Pillars if available
-      if (baziData.pillars) {
-        pdfContent += 'Four Pillars:\n\n';
-        pdfContent += `Year: ${baziData.pillars.year || 'N/A'}\n`;
-        pdfContent += `Month: ${baziData.pillars.month || 'N/A'}\n`;
-        pdfContent += `Day: ${baziData.pillars.day || 'N/A'}\n`;
-        pdfContent += `Hour: ${baziData.pillars.hour || 'N/A'}\n\n`;
-      }
-
-      // Add insights
-      if (insights) {
-        pdfContent += 'Analysis:\n\n';
-        pdfContent += insights;
-      }
-
-      // Export with proper font handling for Chinese
+      // Export PDF
       const success = await exportPDF({
-        textContent: pdfContent,
+        htmlElement: exportContainer,
         filename,
-        userData: pdfUserData,
         language,
-        useHTML2Canvas: false, // Use text-based method for better font support
       });
 
       if (success) {
@@ -121,48 +93,6 @@ const PDFExportButton = ({
       }
     } catch (error) {
       console.error('Export error:', error);
-      setShowError(true);
-    }
-  };
-
-  /**
-   * Handle HTML2Canvas export (for styled layouts)
-   * Alternative method if needed
-   */
-  const handleExportHTML = async () => {
-    try {
-      setShowError(false);
-      const timestamp = new Date().getTime();
-      const filename = `${customName}_${timestamp}.pdf`;
-
-      // Find the PDF container element
-      const pdfContainer = document.getElementById('pdf-export-container');
-      if (!pdfContainer) {
-        setShowError(true);
-        return;
-      }
-
-      const success = await exportPDF({
-        htmlElement: pdfContainer,
-        filename,
-        userData: {
-          name: userInfo.name || 'Unknown',
-          birthDate: baziData.birthDate || 'N/A',
-          birthTime: baziData.birthTime || 'N/A',
-          gender: baziData.gender || 'N/A',
-        },
-        language,
-        useHTML2Canvas: true,
-      });
-
-      if (success) {
-        setShowModal(false);
-        setCustomName(`${userInfo.name || 'BAZI'}_Analysis`);
-      } else {
-        setShowError(true);
-      }
-    } catch (error) {
-      console.error('HTML Export error:', error);
       setShowError(true);
     }
   };
@@ -216,7 +146,7 @@ const PDFExportButton = ({
               </p>
 
               {/* Error Message */}
-              {showError && (
+              {(showError || exportError) && (
                 <div className="pdf-modal-error">
                   <p>Failed to export PDF. Please try again.</p>
                   {exportError && <small>{exportError}</small>}
