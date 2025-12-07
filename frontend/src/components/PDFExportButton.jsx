@@ -32,23 +32,38 @@ const PDFExportButton = ({
     setIsExporting(false)
   }
 
-  const getButtonText = () => {
-    if (language === 'zh-CN') return '📥 導出PDF'
-    if (language === 'zh-TW') return '📥 導出PDF'
-    return '📥 Export PDF'
+  // Translation strings
+  const translations = {
+    en: {
+      buttonText: '📥 Export PDF',
+      modalTitle: 'Export as PDF',
+      label: 'Filename:',
+      hint: '(Timestamp and .pdf extension will be added automatically)',
+      cancel: 'Cancel',
+      export: 'Export',
+      exporting: 'Exporting...'
+    },
+    'zh-CN': {
+      buttonText: '📥 導出PDF',
+      modalTitle: '導出為PDF',
+      label: '文件名:',
+      hint: '(文件名會自動添加時間戳和.pdf擴展名)',
+      cancel: '取消',
+      export: '導出',
+      exporting: '導出中...'
+    },
+    'zh-TW': {
+      buttonText: '📥 導出PDF',
+      modalTitle: '導出為PDF',
+      label: '文件名:',
+      hint: '(文件名會自動添加時間戳和.pdf擴展名)',
+      cancel: '取消',
+      export: '導出',
+      exporting: '導出中...'
+    }
   }
 
-  const getModalTitle = () => {
-    if (language === 'zh-CN') return '導出為PDF'
-    if (language === 'zh-TW') return '導出為PDF'
-    return 'Export as PDF'
-  }
-
-  const getLabel = () => {
-    if (language === 'zh-CN') return '文件名:'
-    if (language === 'zh-TW') return '文件名:'
-    return 'Filename:'
-  }
+  const t = translations[language] || translations.en
 
   return (
     <>
@@ -67,7 +82,7 @@ const PDFExportButton = ({
         className="pdf-export-btn"
         title={isDisabled || !insights ? 'Generate analysis first' : 'Export analysis to PDF'}
       >
-        {getButtonText()}
+        {t.buttonText}
       </button>
 
       {/* Export Modal */}
@@ -75,7 +90,7 @@ const PDFExportButton = ({
         <div className="pdf-modal-overlay" onClick={() => setShowModal(false)}>
           <div className="pdf-modal" onClick={(e) => e.stopPropagation()}>
             <div className="pdf-modal-header">
-              <h3>{getModalTitle()}</h3>
+              <h3>{t.modalTitle}</h3>
               <button 
                 className="pdf-modal-close" 
                 onClick={() => setShowModal(false)}
@@ -86,7 +101,7 @@ const PDFExportButton = ({
 
             <div className="pdf-modal-body">
               <label className="pdf-modal-label">
-                {getLabel()}
+                {t.label}
               </label>
               <input
                 type="text"
@@ -96,11 +111,7 @@ const PDFExportButton = ({
                 placeholder="Enter filename"
               />
               <p className="pdf-modal-hint">
-                {language === 'zh-CN' 
-                  ? '(文件名會自動添加時間戳和.pdf擴展名)'
-                  : language === 'zh-TW'
-                  ? '(文件名會自動添加時間戳和.pdf擴展名)'
-                  : '(Timestamp and .pdf extension will be added automatically)'}
+                {t.hint}
               </p>
             </div>
 
@@ -110,16 +121,14 @@ const PDFExportButton = ({
                 className="pdf-modal-btn secondary"
                 disabled={isExporting}
               >
-                {language === 'zh-CN' ? '取消' : language === 'zh-TW' ? '取消' : 'Cancel'}
+                {t.cancel}
               </button>
               <button
                 onClick={handleExport}
                 className="pdf-modal-btn primary"
                 disabled={isExporting}
               >
-                {isExporting 
-                  ? (language === 'zh-CN' ? '導出中...' : language === 'zh-TW' ? '導出中...' : 'Exporting...')
-                  : (language === 'zh-CN' ? '導出' : language === 'zh-TW' ? '導出' : 'Export')}
+                {isExporting ? t.exporting : t.export}
               </button>
             </div>
           </div>
