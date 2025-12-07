@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useExportPDF } from '../hooks/useExportPDF'
-import PDFTemplate from './PDFTemplate'
 import './PDFExportButton.css'
 
 /**
@@ -22,7 +21,8 @@ const PDFExportButton = ({
     setIsExporting(true)
     
     const filename = `${customName}_${new Date().getTime()}.pdf`
-    const success = await generatePDF(insights, filename, userInfo)
+    // Pass all data to generatePDF
+    const success = await generatePDF(insights, filename, userInfo, baziData)
     
     if (success) {
       setShowModal(false)
@@ -67,14 +67,6 @@ const PDFExportButton = ({
 
   return (
     <>
-      {/* Render PDF Template (hidden) */}
-      <PDFTemplate 
-        userInfo={userInfo}
-        baziData={baziData}
-        insights={insights}
-        language={language}
-      />
-
       {/* Export Button */}
       <button
         onClick={() => setShowModal(true)}
