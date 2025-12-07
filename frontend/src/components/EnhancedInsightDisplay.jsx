@@ -27,13 +27,13 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         });
       }
 
-      // Parse sections with emoji: ### 📊 1. Title
-      // Regex: ### [emoji] [optional number]. [title]
-      const sectionRegex = /###\s+([\p{Emoji}])\s+(?:\d+\.\s*)?([^\n]+)\n([\s\S]*?)(?=###\s+[\p{Emoji}]|$)/gu;
+      // Now split by ### markers - handles both old format and new emoji format
+      // Matches: ### 📊 1. Title or ### 1. Title
+      const sectionRegex = /###\s+([\p{Emoji}]?)\s*(?:\d+\.\s*)?([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
       let match;
 
       while ((match = sectionRegex.exec(insights)) !== null) {
-        const emoji = match[1].trim();
+        const emoji = match[1]?.trim() || '🔮';
         const title = match[2].trim();
         const content = match[3].trim();
 
