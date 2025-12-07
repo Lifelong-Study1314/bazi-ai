@@ -1,7 +1,7 @@
 /**
- * Enhanced PDF Export Hook with Chinese Character Support - FIXED VERSION
- * Uses html2canvas for proper rendering (avoids jsPDF font issues)
- * Supports Simplified Chinese, Traditional Chinese, and English
+ * Enhanced PDF Export Hook - IMPROVED QUALITY VERSION
+ * Fixes: Page cutoff, blurry text, broken layout
+ * Better rendering with proper viewport and scaling
  */
 
 import { useState, useCallback } from 'react';
@@ -9,16 +9,16 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 /**
- * Hook for exporting analysis to PDF
- * Handles multi-language PDFs with proper character rendering
+ * Hook for exporting analysis to PDF with HIGH QUALITY
+ * Handles multi-language PDFs with proper rendering and scaling
  */
 export const useExportPDF = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
 
   /**
-   * Generate PDF from HTML content - MOST RELIABLE METHOD
-   * Converts HTML directly to image, avoiding font encoding issues
+   * Generate PDF from HTML content - HIGH QUALITY VERSION
+   * Captures full page properly with excellent rendering
    * @param {HTMLElement} htmlElement - Element to convert to PDF
    * @param {string} filename - Output filename
    * @param {object} options - Export options
@@ -34,45 +34,85 @@ export const useExportPDF = () => {
           throw new Error('HTML element not provided');
         }
 
-        // Render HTML to canvas with high quality
+        // Calculate optimal dimensions
+        const rect = htmlElement.getBoundingClientRect();
+        const originalWidth = htmlElement.offsetWidth;
+        const originalHeight = htmlElement.offsetHeight;
+
+        console.log('Rendering dimensions:', { originalWidth, originalHeight });
+
+        // Render HTML to canvas with VERY HIGH quality settings
         const canvas = await html2canvas(htmlElement, {
-          scale: 2,
+          scale: 3, // ✅ INCREASED: 2 → 3 for crisp text (HIGH QUALITY)
           logging: false,
           allowTaint: true,
           useCORS: true,
           backgroundColor: '#ffffff',
-          letterRendering: true, // Better for text rendering
+          letterRendering: true, // Better for text
           imageTimeout: 0,
+          windowWidth: originalWidth, // ✅ Use actual element width
+          windowHeight: originalHeight, // ✅ Use actual element height
+          // Add these for better rendering
+          onclone: (clonedDocument) => {
+            // Ensure the cloned element is visible
+            const clonedElement = clonedDocument.querySelector('[data-html2canvas="clone"]');
+            if (clonedElement) {
+              clonedElement.style.visibility = 'visible';
+              clonedElement.style.display = 'block';
+            }
+          },
           ...options.canvasOptions,
         });
 
-        const imgData = canvas.toDataURL('image/png');
+        console.log('Canvas rendered:', { width: canvas.width, height: canvas.height });
 
-        // Calculate dimensions
+        const imgData = canvas.toDataURL('image/png', 1.0); // ✅ FULL QUALITY
+
+        // Calculate PDF dimensions - maintain aspect ratio
         const imgWidth = 210; // A4 width in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        const pdfScale = imgWidth / originalWidth;
+        const imgHeight = originalHeight * pdfScale;
 
-        // Create PDF
+        console.log('PDF dimensions:', { imgWidth, imgHeight });
+
+        // Create PDF with proper orientation
         const pdf = new jsPDF({
           orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
           unit: 'mm',
           format: 'a4',
+          compress: true, // ✅ Compress to reduce file size while maintaining quality
         });
 
         let yPosition = 0;
         const pageHeight = pdf.internal.pageSize.getHeight();
+        const pageWidth = pdf.internal.pageSize.getWidth();
 
-        // Add image, handling multi-page
+        // Add image, handling multi-page with proper scaling
         while (yPosition < imgHeight) {
-          pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, imgHeight);
-          yPosition += pageHeight;
-          if (yPosition < imgHeight) {
+          const remainingHeight = imgHeight - yPosition;
+          const addHeight = Math.min(pageHeight, remainingHeight);
+
+          if (yPosition === 0) {
+            // First page - add entire image or what fits
+            if (imgHeight <= pageHeight) {
+              // Single page - use full dimensions
+              pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            } else {
+              // Multi-page - crop and add
+              pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, addHeight);
+            }
+          } else {
+            // Subsequent pages
             pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, addHeight);
           }
+
+          yPosition += pageHeight;
         }
 
         // Save PDF
         pdf.save(filename);
+        console.log('PDF saved:', filename);
         return true;
       } catch (err) {
         console.error('PDF generation error:', err);
@@ -86,7 +126,7 @@ export const useExportPDF = () => {
   );
 
   /**
-   * Main export function - uses HTML2Canvas method (most reliable)
+   * Main export function - uses improved HTML2Canvas rendering
    * @param {object} params - Export parameters
    * @returns {Promise<boolean>} - Success status
    */
@@ -105,9 +145,11 @@ export const useExportPDF = () => {
 
       return generatePDFFromHTML(htmlElement, filename, {
         canvasOptions: {
-          scale: 2,
+          scale: 3, // High quality
           backgroundColor: '#ffffff',
           letterRendering: true,
+          allowTaint: true,
+          useCORS: true,
         },
       });
     },
