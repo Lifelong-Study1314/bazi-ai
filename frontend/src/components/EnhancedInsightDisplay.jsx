@@ -14,8 +14,8 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
     try {
       const parsedSections = [];
       
-      // Extract the intro (everything before first ### with emoji)
-      const introMatch = insights.match(/^([\s\S]*?)(###\s+[\p{Emoji}])/u);
+      // Extract the intro (everything before first ###)
+      const introMatch = insights.match(/^([\s\S]*?)(###\s)/);
       const intro = introMatch ? introMatch[1] : '';
       
       if (intro && intro.trim().length > 0) {
@@ -27,14 +27,17 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
         });
       }
 
-      // Now split by ### markers - handles both old format and new emoji format
-      // Matches: ### 📊 1. Title or ### 1. Title
-      const sectionRegex = /###\s+([\p{Emoji}]?)\s*(?:\d+\.\s*)?([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
+      // Parse sections with NEW format: ### [emoji] Title (no numbers)
+      // Matches: ### 📊 Title text
+      // Using a more flexible regex that captures emoji and title
+      const sectionRegex = /###\s+([\p{Emoji}])\s+([^\n]+)\n([\s\S]*?)(?=###|$)/gu;
       let match;
 
       while ((match = sectionRegex.exec(insights)) !== null) {
-        const emoji = match[1]?.trim() || '🔮';
-        const title = match[2].trim();
+        const emoji = match[1];
+        const titleRaw = match[2].trim();
+        // Remove any leftover numbers from title
+        const title = titleRaw.replace(/^\d+\.\s*/, '').trim();
         const content = match[3].trim();
 
         if (content.length > 0) {
