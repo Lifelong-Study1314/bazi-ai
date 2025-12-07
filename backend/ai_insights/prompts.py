@@ -17,14 +17,58 @@ def get_system_message(language: str = "en") -> str:
 4. 以同情心和尊重的態度對待
 5. 提供可行的、基於五行平衡原則的建議
 
+重要格式要求：
+每個分析部分結尾都必須包含「可行建議」或「行動建議」，並用符號「-」列出3-5個具體的要點。
+
 分析結構（請按照以下格式）：
 ### 1. 命盤結構與強弱分析
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 2. 職業與財富
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 3. 關係與婚姻
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 4. 健康與養生
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 5. 性格與品質
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 6. 幸運周期與時機
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
+
 ### 7. 人生指引與個人發展
+[分析內容]
+
+- 可行建議 1
+- 可行建議 2
+- 可行建議 3
 
 用繁體中文回應。"""
     
@@ -38,14 +82,58 @@ def get_system_message(language: str = "en") -> str:
 4. 以同情心和尊重的态度对待
 5. 提供可行的、基于五行平衡原则的建议
 
+重要格式要求：
+每个分析部分结尾都必须包含「可行建议」或「行动建议」，并用符号「-」列出3-5个具体的要点。
+
 分析结构（请按照以下格式）：
 ### 1. 命盘结构与强弱分析
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 2. 职业与财富
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 3. 关系与婚姻
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 4. 健康与养生
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 5. 性格与品质
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 6. 幸运周期与时机
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
+
 ### 7. 人生指引与个人发展
+[分析内容]
+
+- 可行建议 1
+- 可行建议 2
+- 可行建议 3
 
 用简体中文回应。"""
     
@@ -59,14 +147,65 @@ Your analysis should:
 4. Be compassionate and respectful in tone
 5. Offer actionable advice based on Five Element balance principles
 
+IMPORTANT FORMAT REQUIREMENT:
+Each section MUST end with "Actionable Advice:" followed by 3-5 bullet points with concrete, practical recommendations.
+
 Analysis Structure (follow this format):
 ### 1. Chart Structure & Strength Analysis
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 2. Career & Finance
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 3. Relationships & Marriage
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 4. Health & Wellness
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 5. Personality & Character
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 6. Luck Cycles & Timing
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
 ### 7. Life Guidance & Personal Development
+[analysis content]
+
+Actionable Advice:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
 
 Respond in English."""
 
@@ -107,7 +246,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 日主：{day_master}
 五行平衡狀態：{balance}
 
-請提供深入的八字分析和人生指導。"""
+請提供深入的八字分析和人生指導。記住在每個分析部分結尾加入具體的可行建議。"""
     
     elif language == "zh-CN":
         return f"""请分析以下八字命盘：
@@ -128,7 +267,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 日主：{day_master}
 五行平衡状态：{balance}
 
-请提供深入的八字分析和人生指导。"""
+请提供深入的八字分析和人生指导。记住在每个分析部分结尾加入具体的可行建议。"""
     
     else:  # English (default)
         return f"""Please provide a BAZI analysis for the following birth chart:
@@ -149,4 +288,4 @@ Five Elements Count:
 Day Master: {day_master}
 Element Balance Status: {balance}
 
-Please provide deep insights and practical guidance for this person's destiny."""
+Please provide deep insights and practical guidance for this person's destiny. Remember to include "Actionable Advice:" with bullet points at the end of each section."""
