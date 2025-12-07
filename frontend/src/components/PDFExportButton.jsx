@@ -1,11 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { useExportPDF } from '../hooks/useExportPDF'
 import PDFTemplate from './PDFTemplate'
 import './PDFExportButton.css'
 
 /**
  * PDF Export Button Component
- * Provides UI for exporting analysis to PDF
  */
 const PDFExportButton = ({ 
   userInfo = {}, 
@@ -53,15 +52,13 @@ const PDFExportButton = ({
 
   return (
     <>
-      {/* Hidden PDF Template for rendering */}
-      <div style={{ display: 'none' }}>
-        <PDFTemplate 
-          userInfo={userInfo}
-          baziData={baziData}
-          insights={insights}
-          language={language}
-        />
-      </div>
+      {/* Render PDF Template (hidden) */}
+      <PDFTemplate 
+        userInfo={userInfo}
+        baziData={baziData}
+        insights={insights}
+        language={language}
+      />
 
       {/* Export Button */}
       <button
