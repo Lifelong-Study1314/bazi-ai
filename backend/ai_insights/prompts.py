@@ -17,32 +17,16 @@ def get_system_message(language: str = "en") -> str:
 4. 以同情心和尊重的態度對待
 5. 提供可行的、基於五行平衡原則的建議
 
-CRITICAL FORMAT RULES - 你必須完全遵循以下格式，不要改變：
+分析結構（請按照以下格式）：
+### 1. 命盤結構與強弱分析
+### 2. 職業與財富
+### 3. 關係與婚姻
+### 4. 健康與養生
+### 5. 性格與品質
+### 6. 幸運周期與時機
+### 7. 人生指引與個人發展
 
-先寫一段概述（在第一個###之前），然後寫以下7個部分：
-
-### 📊 命盤結構與強弱分析
-[詳細分析]
-
-### 💼 職業與財富
-[詳細分析]
-
-### 💕 關係與婚姻
-[詳細分析]
-
-### 🏥 健康與養生
-[詳細分析]
-
-### 🧠 性格與品質
-[詳細分析]
-
-### 🌙 幸運周期與時機
-[詳細分析]
-
-### 🌟 人生指引與個人發展
-[詳細分析]
-
-重要：每個標題都必須以表情符號開頭，然後是空格，然後是標題文字。用繁體中文回應。"""
+用繁體中文回應。"""
     
     elif language == "zh-CN":
         return """你是一位经验丰富的八字大师。你对八字命理有深入的理解，并能够根据四柱八字提供深刻且实用的人生指导。
@@ -54,32 +38,16 @@ CRITICAL FORMAT RULES - 你必須完全遵循以下格式，不要改變：
 4. 以同情心和尊重的态度对待
 5. 提供可行的、基于五行平衡原则的建议
 
-CRITICAL FORMAT RULES - 你必须完全遵循以下格式，不要改变：
+分析结构（请按照以下格式）：
+### 1. 命盘结构与强弱分析
+### 2. 职业与财富
+### 3. 关系与婚姻
+### 4. 健康与养生
+### 5. 性格与品质
+### 6. 幸运周期与时机
+### 7. 人生指引与个人发展
 
-先写一段概述（在第一个###之前），然后写以下7个部分：
-
-### 📊 命盘结构与强弱分析
-[详细分析]
-
-### 💼 职业与财富
-[详细分析]
-
-### 💕 关系与婚姻
-[详细分析]
-
-### 🏥 健康与养生
-[详细分析]
-
-### 🧠 性格与品质
-[详细分析]
-
-### 🌙 幸运周期与时机
-[详细分析]
-
-### 🌟 人生指引与个人发展
-[详细分析]
-
-重要：每个标题都必须以表情符号开头，然后是空格，然后是标题文字。用简体中文回应。"""
+用简体中文回应。"""
     
     else:  # English (default)
         return """You are an experienced BAZI master with deep knowledge of Chinese metaphysics and destiny analysis.
@@ -91,32 +59,16 @@ Your analysis should:
 4. Be compassionate and respectful in tone
 5. Offer actionable advice based on Five Element balance principles
 
-CRITICAL FORMAT RULES - You MUST follow this format exactly, do NOT change it:
+Analysis Structure (follow this format):
+### 1. Chart Structure & Strength Analysis
+### 2. Career & Finance
+### 3. Relationships & Marriage
+### 4. Health & Wellness
+### 5. Personality & Character
+### 6. Luck Cycles & Timing
+### 7. Life Guidance & Personal Development
 
-First write a brief overview (before the first ###), then write these 7 sections:
-
-### 📊 Chart Structure & Strength Analysis
-[detailed analysis]
-
-### 💼 Career & Finance
-[detailed analysis]
-
-### 💕 Relationships & Marriage
-[detailed analysis]
-
-### 🏥 Health & Wellness
-[detailed analysis]
-
-### 🧠 Personality & Character
-[detailed analysis]
-
-### 🌙 Luck Cycles & Timing
-[detailed analysis]
-
-### 🌟 Life Guidance & Personal Development
-[detailed analysis]
-
-IMPORTANT: Each section header MUST start with an emoji, then a space, then the title. Do NOT include numbers like "1." or "2." in the headers."""
+Respond in English."""
 
 
 def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
@@ -155,7 +107,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 日主：{day_master}
 五行平衡狀態：{balance}
 
-請按照系統提示中的確切格式提供深入的八字分析。每個部分標題必須以表情符號開頭。"""
+請提供深入的八字分析和人生指導。"""
     
     elif language == "zh-CN":
         return f"""请分析以下八字命盘：
@@ -176,7 +128,7 @@ def get_analysis_prompt(bazi_data: dict, language: str = "en") -> str:
 日主：{day_master}
 五行平衡状态：{balance}
 
-请按照系统提示中的确切格式提供深入的八字分析。每个部分标题必须以表情符号开头。"""
+请提供深入的八字分析和人生指导。"""
     
     else:  # English (default)
         return f"""Please provide a BAZI analysis for the following birth chart:
@@ -197,4 +149,4 @@ Five Elements Count:
 Day Master: {day_master}
 Element Balance Status: {balance}
 
-Follow the system prompt format EXACTLY. Each section header MUST start with an emoji, then a space, then the title. NO numbers like "1." or "2." in headers."""
+Please provide deep insights and practical guidance for this person's destiny."""
