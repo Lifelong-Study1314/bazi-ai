@@ -1,160 +1,278 @@
 /**
- * Enhanced PDF Export Hook - IMPROVED QUALITY VERSION
- * Fixes: Page cutoff, blurry text, broken layout
- * Better rendering with proper viewport and scaling
+ * PDF Export Hook - PROPER DOCUMENT APPROACH
+ * Creates a clean, readable PDF document (not a screenshot)
+ * Formats the analysis as a professional report
+ * Fixes: Dark background, unreadable modal, poor layout
  */
 
 import { useState, useCallback } from 'react';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 /**
- * Hook for exporting analysis to PDF with HIGH QUALITY
- * Handles multi-language PDFs with proper rendering and scaling
+ * Hook for creating professional PDF reports
+ * Generates text-based PDF with proper formatting
+ * No screenshots, pure document creation
  */
 export const useExportPDF = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
 
   /**
-   * Generate PDF from HTML content - HIGH QUALITY VERSION
-   * Captures full page properly with excellent rendering
-   * @param {HTMLElement} htmlElement - Element to convert to PDF
-   * @param {string} filename - Output filename
-   * @param {object} options - Export options
-   * @returns {Promise<boolean>} - Success status
-   */
-  const generatePDFFromHTML = useCallback(
-    async (htmlElement, filename, options = {}) => {
-      try {
-        setIsExporting(true);
-        setError(null);
-
-        if (!htmlElement) {
-          throw new Error('HTML element not provided');
-        }
-
-        // Calculate optimal dimensions
-        const rect = htmlElement.getBoundingClientRect();
-        const originalWidth = htmlElement.offsetWidth;
-        const originalHeight = htmlElement.offsetHeight;
-
-        console.log('Rendering dimensions:', { originalWidth, originalHeight });
-
-        // Render HTML to canvas with VERY HIGH quality settings
-        const canvas = await html2canvas(htmlElement, {
-          scale: 3, // ✅ INCREASED: 2 → 3 for crisp text (HIGH QUALITY)
-          logging: false,
-          allowTaint: true,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          letterRendering: true, // Better for text
-          imageTimeout: 0,
-          windowWidth: originalWidth, // ✅ Use actual element width
-          windowHeight: originalHeight, // ✅ Use actual element height
-          // Add these for better rendering
-          onclone: (clonedDocument) => {
-            // Ensure the cloned element is visible
-            const clonedElement = clonedDocument.querySelector('[data-html2canvas="clone"]');
-            if (clonedElement) {
-              clonedElement.style.visibility = 'visible';
-              clonedElement.style.display = 'block';
-            }
-          },
-          ...options.canvasOptions,
-        });
-
-        console.log('Canvas rendered:', { width: canvas.width, height: canvas.height });
-
-        const imgData = canvas.toDataURL('image/png', 1.0); // ✅ FULL QUALITY
-
-        // Calculate PDF dimensions - maintain aspect ratio
-        const imgWidth = 210; // A4 width in mm
-        const pdfScale = imgWidth / originalWidth;
-        const imgHeight = originalHeight * pdfScale;
-
-        console.log('PDF dimensions:', { imgWidth, imgHeight });
-
-        // Create PDF with proper orientation
-        const pdf = new jsPDF({
-          orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
-          unit: 'mm',
-          format: 'a4',
-          compress: true, // ✅ Compress to reduce file size while maintaining quality
-        });
-
-        let yPosition = 0;
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        const pageWidth = pdf.internal.pageSize.getWidth();
-
-        // Add image, handling multi-page with proper scaling
-        while (yPosition < imgHeight) {
-          const remainingHeight = imgHeight - yPosition;
-          const addHeight = Math.min(pageHeight, remainingHeight);
-
-          if (yPosition === 0) {
-            // First page - add entire image or what fits
-            if (imgHeight <= pageHeight) {
-              // Single page - use full dimensions
-              pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            } else {
-              // Multi-page - crop and add
-              pdf.addImage(imgData, 'PNG', 0, yPosition, imgWidth, addHeight);
-            }
-          } else {
-            // Subsequent pages
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, addHeight);
-          }
-
-          yPosition += pageHeight;
-        }
-
-        // Save PDF
-        pdf.save(filename);
-        console.log('PDF saved:', filename);
-        return true;
-      } catch (err) {
-        console.error('PDF generation error:', err);
-        setError(err.message || 'Failed to generate PDF');
-        return false;
-      } finally {
-        setIsExporting(false);
-      }
-    },
-    []
-  );
-
-  /**
-   * Main export function - uses improved HTML2Canvas rendering
+   * Generate professional PDF document from text content
+   * Creates a clean, readable report
    * @param {object} params - Export parameters
    * @returns {Promise<boolean>} - Success status
    */
-  const exportPDF = useCallback(
-    async (params) => {
+  const exportPDF = useCallback(async (params) => {
+    try {
+      setIsExporting(true);
+      setError(null);
+
       const {
-        htmlElement, // Element to render
+        htmlElement = null,
+        textContent = '',
         filename = 'BAZI_Analysis.pdf',
+        userData = {},
         language = 'en',
       } = params;
 
-      if (!htmlElement) {
-        setError('No content provided for PDF export');
-        return false;
+      // Extract text from HTML element if provided
+      let contentText = textContent;
+      if (htmlElement && !textContent) {
+        contentText = htmlElement.innerText || htmlElement.textContent || '';
       }
 
-      return generatePDFFromHTML(htmlElement, filename, {
-        canvasOptions: {
-          scale: 3, // High quality
-          backgroundColor: '#ffffff',
-          letterRendering: true,
-          allowTaint: true,
-          useCORS: true,
-        },
+      if (!contentText) {
+        throw new Error('No content to export');
+      }
+
+      // Create PDF document
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
       });
-    },
-    [generatePDFFromHTML]
-  );
+
+      // Set up fonts and colors
+      const colors = {
+        gold: [201, 169, 97],
+        darkNavy: [26, 32, 53],
+        darkGray: [80, 80, 80],
+        lightGray: [150, 150, 150],
+        black: [0, 0, 0],
+        white: [255, 255, 255],
+      };
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - 2 * margin;
+      let yPosition = margin;
+
+      // Function to add text with word wrapping
+      const addWrappedText = (text, fontSize, color, isBold = false) => {
+        pdf.setFontSize(fontSize);
+        pdf.setTextColor(...color);
+        if (isBold) {
+          pdf.setFont(undefined, 'bold');
+        } else {
+          pdf.setFont(undefined, 'normal');
+        }
+
+        const lines = pdf.splitTextToSize(text, contentWidth);
+        const lineHeight = fontSize * 0.35;
+
+        lines.forEach((line) => {
+          if (yPosition + lineHeight > pageHeight - margin) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+          pdf.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+
+        yPosition += 2; // Spacing
+        return lines.length;
+      };
+
+      // ===== HEADER =====
+      // Background color
+      pdf.setFillColor(...colors.darkNavy);
+      pdf.rect(0, 0, pageWidth, 35, 'F');
+
+      // Title
+      pdf.setFontSize(20);
+      pdf.setTextColor(...colors.gold);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('BAZI Destiny Analysis', margin, 15);
+
+      // Subtitle
+      pdf.setFontSize(10);
+      pdf.setTextColor(...colors.white);
+      pdf.setFont(undefined, 'normal');
+      pdf.text('Professional Destiny Report', margin, 23);
+
+      yPosition = 40;
+
+      // ===== USER INFORMATION SECTION =====
+      if (userData && Object.keys(userData).length > 0) {
+        // Section title
+        pdf.setFontSize(12);
+        pdf.setTextColor(...colors.darkNavy);
+        pdf.setFont(undefined, 'bold');
+        pdf.text('Birth Information', margin, yPosition);
+        yPosition += 8;
+
+        // Draw a line
+        pdf.setDrawColor(...colors.gold);
+        pdf.line(margin, yPosition - 2, margin + 40, yPosition - 2);
+        yPosition += 5;
+
+        // User info table
+        const infoData = [
+          { label: 'Name', value: userData.name || 'N/A' },
+          { label: 'Birth Date', value: userData.birthDate || 'N/A' },
+          { label: 'Birth Time', value: userData.birthTime || 'N/A' },
+          { label: 'Gender', value: userData.gender || 'N/A' },
+        ];
+
+        pdf.setFontSize(10);
+        infoData.forEach((item) => {
+          pdf.setTextColor(...colors.darkGray);
+          pdf.setFont(undefined, 'bold');
+          pdf.text(`${item.label}:`, margin + 2, yPosition);
+
+          pdf.setTextColor(...colors.black);
+          pdf.setFont(undefined, 'normal');
+          pdf.text(item.value, margin + 50, yPosition);
+
+          yPosition += 6;
+        });
+
+        yPosition += 5;
+      }
+
+      // ===== MAIN CONTENT SECTION =====
+      pdf.setFontSize(12);
+      pdf.setTextColor(...colors.darkNavy);
+      pdf.setFont(undefined, 'bold');
+      pdf.text('Analysis Report', margin, yPosition);
+      yPosition += 8;
+
+      // Draw a line
+      pdf.setDrawColor(...colors.gold);
+      pdf.line(margin, yPosition - 2, margin + 40, yPosition - 2);
+      yPosition += 5;
+
+      // Split content by paragraphs and sections
+      const sections = contentText.split(/\n\n+/).filter((s) => s.trim());
+
+      sections.forEach((section, index) => {
+        const lines = section.trim().split('\n');
+
+        lines.forEach((line) => {
+          const trimmedLine = line.trim();
+          if (!trimmedLine) return;
+
+          // Check if this is a heading (contains numbers like "1.", "2.", etc.)
+          const isHeading = /^\d+\.|^##|^###/.test(trimmedLine);
+
+          if (isHeading) {
+            // Section heading
+            if (yPosition > margin && yPosition < pageHeight - 30) {
+              yPosition += 3; // Extra space before heading
+            }
+
+            pdf.setFontSize(11);
+            pdf.setTextColor(...colors.darkNavy);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(
+              trimmedLine.replace(/^#+\s*/, ''),
+              margin,
+              yPosition
+            );
+            yPosition += 7;
+          } else {
+            // Regular text
+            pdf.setFontSize(10);
+            pdf.setTextColor(...colors.black);
+            pdf.setFont(undefined, 'normal');
+
+            const wrappedLines = pdf.splitTextToSize(trimmedLine, contentWidth);
+            const lineHeight = 5.5;
+
+            wrappedLines.forEach((wrappedLine) => {
+              if (yPosition + lineHeight > pageHeight - margin) {
+                pdf.addPage();
+
+                // Re-add header on new pages
+                pdf.setFillColor(...colors.darkNavy);
+                pdf.rect(0, 0, pageWidth, 20, 'F');
+                pdf.setFontSize(10);
+                pdf.setTextColor(...colors.gold);
+                pdf.text('BAZI Destiny Analysis (continued...)', margin, 10);
+
+                yPosition = 25;
+              }
+
+              pdf.text(wrappedLine, margin, yPosition);
+              yPosition += lineHeight;
+            });
+          }
+        });
+
+        // Space between sections
+        yPosition += 3;
+      });
+
+      // ===== FOOTER =====
+      const totalPages = pdf.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+
+        // Footer line
+        pdf.setDrawColor(...colors.lightGray);
+        pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+
+        // Footer text
+        pdf.setFontSize(8);
+        pdf.setTextColor(...colors.lightGray);
+
+        // Generated date
+        const date = new Date().toLocaleDateString(
+          language === 'zh-CN' ? 'zh-CN' : language === 'zh-TW' ? 'zh-TW' : 'en-US'
+        );
+        pdf.text(`Generated: ${date}`, margin, pageHeight - 10);
+
+        // Page number
+        pdf.text(
+          `Page ${i} of ${totalPages}`,
+          pageWidth - margin - 20,
+          pageHeight - 10
+        );
+
+        // Disclaimer
+        pdf.setFontSize(7);
+        pdf.setTextColor(...colors.lightGray);
+        pdf.text(
+          'This analysis is for reference only. Consult professionals for important decisions.',
+          margin,
+          pageHeight - 5
+        );
+      }
+
+      // Save the PDF
+      pdf.save(filename);
+      console.log('PDF saved successfully:', filename);
+      return true;
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      setError(err.message || 'Failed to generate PDF');
+      return false;
+    } finally {
+      setIsExporting(false);
+    }
+  }, []);
 
   return {
     exportPDF,
