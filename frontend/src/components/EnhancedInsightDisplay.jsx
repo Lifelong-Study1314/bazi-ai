@@ -25,25 +25,44 @@ const EnhancedInsightDisplay = ({ insights = '' }) => {
     try {
       const parsedSections = [];
       
-      // Extract the intro (everything before first ### with a number)
-      const introMatch = insights.match(/^([\s\S]*?)(###\s+\d)/);
-      const intro = introMatch ? introMatch[1] : '';
-      
-      if (intro && intro.trim().length > 0) {
-        parsedSections.push({
-          type: 'intro',
-          content: intro.trim(),
-          title: 'Overview',
-          emoji: '🔮'
-        });
+      // Split by lines to find intro content
+      const lines = insights.split('\n');
+      let introLines = [];
+      let contentStartIdx = 0;
+
+      // Find where numbered sections start (### 1., ### 2., etc.)
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        // Match "### 1." or "### 1" followed by section title
+        if (/###\s+\d+\.?\s+/.test(line)) {
+          contentStartIdx = i;
+          break;
+        }
       }
 
-      // Parse sections - more flexible regex
-      // Matches: ### 1. Title or ### 1 Title or ### 1.Title
+      // Everything before the first numbered section is intro
+      if (contentStartIdx > 0) {
+        introLines = lines.slice(0, contentStartIdx);
+        const introText = introLines.map(l => l.trim()).filter(l => l && !l.startsWith('###')).join('\n');
+        
+        if (introText) {
+          parsedSections.push({
+            type: 'intro',
+            content: introText,
+            title: 'Overview',
+            emoji: '🔮'
+          });
+        }
+      }
+
+      // Now parse the numbered sections
+      const contentText = lines.slice(contentStartIdx).join('\n');
+      
+      // Match sections: ### 1. Title ... content ... until next ### [number]
       const sectionRegex = /###\s+(\d+)\.?\s*([^\n]+)\n([\s\S]*?)(?=###\s+\d|$)/g;
       let match;
 
-      while ((match = sectionRegex.exec(insights)) !== null) {
+      while ((match = sectionRegex.exec(contentText)) !== null) {
         const sectionNum = parseInt(match[1]);
         const title = match[2].trim();
         const content = match[3].trim();
