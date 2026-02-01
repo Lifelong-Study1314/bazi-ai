@@ -15,9 +15,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from models import AnalyzeRequest
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List, Dict
 from bazi_engine.calculator import calculate_bazi
-from ai_insights.generator import generate_insights_generator
+from ai_insights.generator import (
+    generate_insights_generator,
+    generate_insights_non_stream,
+    generate_sections_as_completed,
+    generate_sections_parallel,
+)
 from config import get_settings
 
 
@@ -64,6 +69,11 @@ class BaziChartResponse(BaseModel):
     four_pillars: Optional[dict] = None
     day_master: Optional[dict] = None
     elements: Optional[dict] = None
+    age_periods: Optional[List[Dict]] = None
+    strongest_ten_god: Optional[dict] = None
+    annual_luck: Optional[dict] = None
+    seasonal_strength: Optional[dict] = None
+    deities: Optional[List[Dict]] = None
     error: Optional[str] = None
 
 
@@ -100,7 +110,8 @@ async def stream_insights(request: AnalyzeRequest):
         bazi_data = calculate_bazi(
             request.birth_date,
             request.birth_hour,
-            request.gender
+            request.gender,
+            request.language,
         )
         
         logger.info(f"✅ BAZI calculation successful")
@@ -112,44 +123,42 @@ async def stream_insights(request: AnalyzeRequest):
         # Create generator
         async def stream_insights_gen():
             try:
-                # First send BAZI chart as proper JSON
-                chart_message = {
-                    'type': 'bazi_chart',
-                    'data': bazi_data
-                }
-                logger.debug(f"Sending BAZI chart...")
+                # 1. Send BAZI chart
+                chart_message = {'type': 'bazi_chart', 'data': bazi_data}
+                logger.debug("Sending BAZI chart...")
                 yield f"data: {json.dumps(chart_message)}\n\n"
-                
-                # Then stream insights
-                logger.info(f"🚀 Starting insights generation with language={language}")
+
+                # 2. Fire 5 parallel section calls; send each as it completes
+                logger.info("🚀 Generating 5 AI sections in parallel...")
+                async for section_key, section_content in generate_sections_as_completed(
+                    bazi_data, language, stagger_ms=300
+                ):
+                    section_message = {
+                        'type': 'section',
+                        'key': section_key,
+                        'content': section_content,
+                    }
+                    if section_content is None:
+                        section_message['error'] = 'Generation failed'
+                    yield f"data: {json.dumps(section_message)}\n\n"
+                    logger.debug(f"Section {section_key} sent")
+
+                # 3. Stream comprehensive Destiny Analysis
+                logger.info("🚀 Starting Destiny Analysis stream...")
                 chunk_count = 0
-                
                 async for chunk in generate_insights_generator(bazi_data, language):
                     chunk_count += 1
-                    insight_message = {
-                        'type': 'insight',
-                        'text': chunk
-                    }
-                    
-                    if chunk_count <= 3:
-                        logger.info(f"📨 Chunk {chunk_count}: {len(chunk)} chars")
-                        if "사주" in chunk or "금" in chunk:
-                            logger.info(f"  ✨ Korean detected in chunk!")
-                    
+                    insight_message = {'type': 'insight', 'text': chunk}
                     yield f"data: {json.dumps(insight_message)}\n\n"
-                
                 logger.info(f"✅ Insights streaming complete: {chunk_count} chunks")
-                
-                # Send completion message
+
+                # 4. Send completion
                 complete_message = {'type': 'complete'}
                 yield f"data: {json.dumps(complete_message)}\n\n"
-                
+
             except Exception as e:
                 logger.error(f"❌ Stream error: {e}", exc_info=True)
-                error_message = {
-                    'type': 'error',
-                    'message': str(e)
-                }
+                error_message = {'type': 'error', 'message': str(e)}
                 yield f"data: {json.dumps(error_message)}\n\n"
         
         return StreamingResponse(
@@ -167,6 +176,29 @@ async def stream_insights(request: AnalyzeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/analyze-sync", tags=["Analysis"])
+async def analyze_sync(request: BaziAnalysisRequest):
+    """Non-streaming BAZI analysis (SSE fallback)"""
+    try:
+        bazi_data = calculate_bazi(
+            request.birth_date,
+            request.birth_hour,
+            request.gender,
+            request.language,
+        )
+        language = request.language if request.language else "en"
+        sections = await generate_sections_parallel(bazi_data, language)
+        insights = await generate_insights_non_stream(bazi_data, language)
+        return {
+            "bazi_chart": bazi_data,
+            "sections": sections,
+            "insights": insights,
+        }
+    except Exception as e:
+        logger.error(f"❌ Analyze-sync error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/api/bazi-chart", tags=["Analysis"])
 async def get_bazi_chart(request: BaziAnalysisRequest) -> BaziChartResponse:
     """
@@ -177,7 +209,8 @@ async def get_bazi_chart(request: BaziAnalysisRequest) -> BaziChartResponse:
         bazi_data = calculate_bazi(
             request.birth_date,
             request.birth_hour,
-            request.gender
+            request.gender,
+            request.language,
         )
         
         return BaziChartResponse(
@@ -185,6 +218,11 @@ async def get_bazi_chart(request: BaziAnalysisRequest) -> BaziChartResponse:
             four_pillars=bazi_data.get("four_pillars"),
             day_master=bazi_data.get("day_master"),
             elements=bazi_data.get("elements"),
+            age_periods=bazi_data.get("age_periods"),
+            strongest_ten_god=bazi_data.get("strongest_ten_god"),
+            annual_luck=bazi_data.get("annual_luck"),
+            seasonal_strength=bazi_data.get("seasonal_strength"),
+            deities=bazi_data.get("deities"),
             error=bazi_data.get("error")
         )
     

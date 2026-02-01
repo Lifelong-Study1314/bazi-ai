@@ -3,6 +3,15 @@ import axios from 'axios'
 // Determine API base URL
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
+/** Build full API URL for an endpoint path. Avoids double /api when base already includes it. */
+const buildApiUrl = (endpoint) => {
+  const base = API_BASE_URL.replace(/\/$/, '')
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+  if (!base.startsWith('http')) return path
+  const apiPath = base.endsWith('/api') ? path.replace(/^\/api/, '') : path
+  return `${base}${apiPath.startsWith('/') ? '' : '/'}${apiPath}`
+}
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -17,7 +26,7 @@ const apiClient = axios.create({
  */
 export const checkHealth = async () => {
   try {
-    const response = await apiClient.get('/health')  // ← Remove /api
+    const response = await apiClient.get('/health')
     return response.data
   } catch (error) {
     throw new Error(`Health check failed: ${error.message}`)
@@ -29,7 +38,7 @@ export const checkHealth = async () => {
  */
 export const getBaziChart = async (birthDate, birthHour, gender, language = 'en') => {
   try {
-    const response = await apiClient.post('/bazi-chart', {  // ← Remove /api
+    const response = await apiClient.post('/bazi-chart', {
       birth_date: birthDate,
       birth_hour: birthHour,
       gender: gender,
@@ -38,6 +47,34 @@ export const getBaziChart = async (birthDate, birthHour, gender, language = 'en'
     return response.data
   } catch (error) {
     throw new Error(`Failed to get BAZI chart: ${error.message}`)
+  }
+}
+
+const STREAM_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+
+/**
+ * Non-streaming BAZI analysis (SSE fallback)
+ */
+export const fetchBaziAnalysisNonStreaming = async (birthDate, birthHour, gender, language = 'en') => {
+  const url = buildApiUrl('/api/analyze-sync')
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS)
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        birth_date: birthDate,
+        birth_hour: birthHour,
+        gender: gender,
+        language: language
+      }),
+      signal: controller.signal
+    })
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+    return response.json()
+  } finally {
+    clearTimeout(timeoutId)
   }
 }
 
@@ -53,6 +90,7 @@ export const streamBaziAnalysis = async (
   onError
 ) => {
   const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), STREAM_TIMEOUT_MS)
   
   try {
     const payload = {
@@ -62,8 +100,9 @@ export const streamBaziAnalysis = async (
       language: language
     }
 
+    const url = buildApiUrl('/api/analyze')
     const response = await fetch(
-      `${API_BASE_URL}/analyze`,  // ← Remove /api
+      url,
       {
         method: 'POST',
         headers: {
@@ -110,10 +149,14 @@ export const streamBaziAnalysis = async (
       }
     }
     
+    clearTimeout(timeoutId)
   } catch (err) {
+    clearTimeout(timeoutId)
     if (err.name !== 'AbortError') {
       console.error('Stream error:', err)
       onError(err)
+    } else {
+      onError(new Error('Request timed out. Please try again.'))
     }
   }
   

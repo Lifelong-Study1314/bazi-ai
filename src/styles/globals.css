@@ -3,20 +3,23 @@
 @import 'tailwindcss/utilities';
 
 :root {
-  --primary-color: #2c5282;
-  --secondary-color: #f4b942;
-  --accent-color: #d69e2e;
-  --bg-light: #fafafa;
-  --bg-white: #ffffff;
-  --text-dark: #1a202c;
-  --text-light: #718096;
-  --border-color: #e2e8f0;
+  --bazi-bg: #05060a;
+  --bazi-surface: #14141f;
+  --bazi-gold: #d4af37;
+  --text-primary: #fef3c7;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --border-subtle: rgba(255, 255, 255, 0.06);
 }
 
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(ellipse at top, rgba(212, 175, 55, 0.08) 0%, transparent 50%), #05060a;
   min-height: 100vh;
 }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
 
 @keyframes fadeIn {
   from {
@@ -62,7 +65,7 @@ body {
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #d4af37 0%, #f5e6b7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -72,20 +75,20 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar (dark theme) */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #0f0f12;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #3f3f46;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #52525b;
 }

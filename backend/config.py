@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     
     # BAZI Configuration
-    max_tokens: int = Field(default=2000, alias="MAX_TOKENS")
+    max_tokens: int = Field(default=8192, alias="MAX_TOKENS")
+    api_timeout: int = Field(default=180, alias="API_TIMEOUT")
     
     # DeepSeek API Configuration
     deepseek_api_key: str = Field(default="", alias="DEEPSEEK_API_KEY")

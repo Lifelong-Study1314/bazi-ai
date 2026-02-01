@@ -10,7 +10,7 @@ class AnalyzeRequest(BaseModel):
     birth_date: str  # Format: YYYY-MM-DD
     birth_hour: int  # Format: 0-23
     gender: str      # "male" or "female"
-    language: str = "en"  # "en", "zh-TW", or "zh-CN"
+    language: str = "en"  # "en", "zh-TW", "zh-CN", "ko"
     
     class Config:
         json_schema_extra = {
