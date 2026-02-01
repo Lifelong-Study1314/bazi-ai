@@ -1,7 +1,9 @@
 import React from 'react'
+import { stripDisclaimers } from '../utils/stripDisclaimers'
 
 /**
  * Renders AI-generated section content with clean formatting.
+ * - Strips AI disclaimer phrases (e.g. "以上内容由DeepSeek生成，仅供娱乐参考")
  * - Splits on newlines, renders as paragraphs
  * - Parses **text** and renders as <strong>text</strong>
  * - Handles bullet points (- or *) and numbered lists
@@ -11,7 +13,8 @@ export const SectionContent = React.memo(({ content, className = '' }) => {
     return null
   }
 
-  const lines = content.split('\n')
+  const cleanedContent = stripDisclaimers(content)
+  const lines = cleanedContent.split('\n')
 
   const renderLine = (line, i) => {
     const trimmed = line.trim()

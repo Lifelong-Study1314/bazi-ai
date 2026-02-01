@@ -5,23 +5,13 @@ From the repo root:
 1. Create/verify virtual environment (recommended):
    cd backend
    python3 -m venv .venv
-   source .venv/bin/activate  # on macOS/Linux
+   source .venv/bin/activate
 
 2. Install backend dependencies:
    pip install -r requirements.txt
 
-3. Set backend environment variables (in backend/.env):
-    Make sure this file exists and has at least:
-    DEEPSEEK_API_KEY: your real key
-    FRONTEND_URL: http://localhost:5173
-    BACKEND_URL: http://localhost:8000
-    Optional: APP_NAME, VERSION, DEBUG, MAX_TOKENS, etc.
-
-4. Start the FastAPI server (pick one of these):
-Using the built-in main script (simplest):
-     cd backend
+3. Start the FastAPI server (pick one of these):
      python3 main.py
-
 
 
 # Run the frontend (Vite + React)
