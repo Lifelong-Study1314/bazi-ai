@@ -26,7 +26,7 @@ const apiClient = axios.create({
  */
 export const checkHealth = async () => {
   try {
-    const response = await apiClient.get('/health')
+    const response = await apiClient.get('/api/health')
     return response.data
   } catch (error) {
     throw new Error(`Health check failed: ${error.message}`)
@@ -38,7 +38,7 @@ export const checkHealth = async () => {
  */
 export const getBaziChart = async (birthDate, birthHour, gender, language = 'en') => {
   try {
-    const response = await apiClient.post('/bazi-chart', {
+    const response = await apiClient.post('/api/bazi-chart', {
       birth_date: birthDate,
       birth_hour: birthHour,
       gender: gender,
