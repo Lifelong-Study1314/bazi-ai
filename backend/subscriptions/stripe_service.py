@@ -39,14 +39,14 @@ async def create_checkout_session(user: User) -> str:
         provider = get_auth_provider()
         await provider.update_stripe_customer_id(user.id, customer_id)
 
+    # WeChat first = default; Alipay omitted until approved in Dashboard
     session = stripe.checkout.Session.create(
         customer=customer_id,
         mode="subscription",
         line_items=[{"price": settings.stripe_price_id, "quantity": 1}],
         payment_method_types=[
-            "card",
-            "alipay",
             "wechat_pay",
+            "card",
         ],
         payment_method_options={
             "wechat_pay": {"client": "web"},
