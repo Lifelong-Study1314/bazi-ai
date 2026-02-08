@@ -20,6 +20,9 @@ __pycache__/
 venv/
 env/
 
+# SQLite DB (auth mock provider)
+backend/data/*.db
+
 # Node
 node_modules/
 

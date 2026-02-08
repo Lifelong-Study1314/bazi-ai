@@ -111,7 +111,7 @@ def get_deities_for_chart(four_pillars: Dict, day_master: Dict) -> List[Dict]:
                 "name_en": "Heavenly Virtue Nobleman",
                 "name_cn": "天乙貴人",
                 "pillar": ",".join(found_in),
-                "interpretation_en": "Auspicious star indicating贵人 support, help from others, and ability to overcome difficulties.",
+                "interpretation_en": "Auspicious star indicating noble support, help from others, and the ability to overcome difficulties.",
                 "interpretation_zh_tw": "貴人星，主得貴人相助，逢凶化吉，易得他人提攜。",
                 "interpretation_zh_cn": "贵人星，主得贵人相助，逢凶化吉，易得他人提携。",
                 "interpretation_ko": "귀인성으로，귀인 도움과 타인의 지원을 받으며 어려움을 극복하는 능력이 있습니다.",

@@ -1,161 +1,128 @@
 import React from 'react'
 import SectionContent from './SectionContent'
+import { localizeElement } from '../utils/localize'
 
-const ELEMENT_COLORS = {
-  Wood: '#4CAF50',
-  Fire: '#FF5722',
-  Earth: '#F4B183',
-  Metal: '#C0C0C0',
-  Water: '#2196F3',
+/**
+ * ElementWheel — Five Elements pentagonal radar chart.
+ *
+ * Visuals:
+ *   - Pentagonal layout (Wood, Fire, Earth, Metal, Water)
+ *   - Outer generation cycle pentagon
+ *   - Inner control cycle star
+ *   - Filled radar polygon showing element strength percentages
+ *   - "Mystical Luxury" dark/gold theme
+ */
+
+const ELEMENT_STYLES = {
+  Wood:  { color: '#10b981', glow: '0 0 15px rgba(16, 185, 129, 0.3)' },
+  Fire:  { color: '#ef4444', glow: '0 0 15px rgba(239, 68, 68, 0.3)' },
+  Earth: { color: '#d4af37', glow: '0 0 15px rgba(212, 175, 55, 0.3)' },
+  Metal: { color: '#94a3b8', glow: '0 0 15px rgba(148, 163, 184, 0.3)' },
+  Water: { color: '#3b82f6', glow: '0 0 15px rgba(59, 130, 246, 0.3)' },
 }
 
-// Generation cycle order: Wood -> Fire -> Earth -> Metal -> Water -> Wood
-const ELEMENT_ORDER = ['Wood', 'Fire', 'Earth', 'Metal', 'Water']
-
-// Destruction pairs: Wood-Earth, Earth-Water, Water-Fire, Fire-Metal, Metal-Wood
-const DESTRUCTION_PAIRS = [
-  ['Wood', 'Earth'],
-  ['Earth', 'Water'],
-  ['Water', 'Fire'],
-  ['Fire', 'Metal'],
-  ['Metal', 'Wood'],
-]
-
-const BALANCE_LABELS = {
-  weak: {
-    en: 'Elemental Balance: Needs more support',
-    'zh-TW': '五行平衡：需要更多支持',
-    'zh-CN': '五行平衡：需要更多支持',
-    ko: '오행 균형: 보강 필요',
-  },
-  neutral: {
-    en: 'Elemental Balance: Harmonious',
-    'zh-TW': '五行平衡：和諧',
-    'zh-CN': '五行平衡：和谐',
-    ko: '오행 균형: 조화로움',
-  },
-  strong: {
-    en: 'Elemental Balance: Strong',
-    'zh-TW': '五行平衡：強旺',
-    'zh-CN': '五行平衡：强旺',
-    ko: '오행 균형: 강함',
-  },
-  insufficient_data: {
-    en: 'Elemental Balance: Insufficient data',
-    'zh-TW': '五行平衡：資料不足',
-    'zh-CN': '五行平衡：资料不足',
-    ko: '오행 균형: 자료 부족',
-  },
-}
+const THEME_GOLD = '#D4AF37'
 
 export default function ElementWheel({ elements, language = 'en', customAdvice = null }) {
   if (!elements?.counts) return null
 
+  const size = 440
+  const center = size / 2
+  const radius = size * 0.36
+  const nodeRadius = 34
+  const elementOrder = ['Wood', 'Fire', 'Earth', 'Metal', 'Water']
+
   const counts = elements.counts
-  const analysis = elements.analysis || {}
-  const balance = analysis.balance || 'neutral'
-  const recommendations = customAdvice ?? analysis.recommendations ?? ''
+  const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1
+  const percentages = elementOrder.map(el => ({
+    element: el,
+    percent: Math.round(((counts[el] || 0) / total) * 100),
+    count: counts[el] || 0,
+  }))
 
-  const maxCount = Math.max(...Object.values(counts), 1)
-  const size = 200
-  const cx = size / 2
-  const cy = size / 2
-  const radius = size * 0.38
-
-  // Pentagon vertices (top = Wood, clockwise: Fire, Earth, Metal, Water)
-  const getVertex = (i) => {
+  // Pentagon node positions
+  const points = elementOrder.map((_, i) => {
     const angle = (i * 72 - 90) * (Math.PI / 180)
     return {
-      x: cx + radius * Math.cos(angle),
-      y: cy + radius * Math.sin(angle),
+      x: center + radius * Math.cos(angle),
+      y: center + radius * Math.sin(angle),
+      element: elementOrder[i],
+      ...percentages[i],
     }
-  }
+  })
 
-  const vertices = ELEMENT_ORDER.map((_, i) => getVertex(i))
+  // Radar polygon (filled shadow) based on element percentage
+  const radarPoints = elementOrder.map((_, i) => {
+    const angle = (i * 72 - 90) * (Math.PI / 180)
+    const pct = percentages[i].percent / 100
+    const r = radius * (0.1 + pct * 0.9)
+    return { x: center + r * Math.cos(angle), y: center + r * Math.sin(angle) }
+  })
+  const radarPath = radarPoints.map(p => `${p.x},${p.y}`).join(' ')
 
-  const balanceLabel = BALANCE_LABELS[balance]?.[language] || BALANCE_LABELS.neutral[language] || BALANCE_LABELS.neutral.en
+  // Outer pentagon path
+  const outerPath = points.map(p => `${p.x},${p.y}`).join(' ')
+
+  // AI advice text
+  const recommendations = customAdvice ?? elements.analysis?.recommendations ?? ''
 
   return (
-    <div className="space-y-4">
-      <div className="relative mx-auto w-full max-w-[280px] aspect-square">
-        <svg
-          viewBox={`0 0 ${size} ${size}`}
-          className="w-full h-full"
-          aria-label="Five Elements wheel"
-        >
-          {/* Destruction cycle (dashed, dim) */}
-          <g stroke="rgba(163,163,163,0.25)" strokeWidth="1" strokeDasharray="4 3" fill="none">
-            {DESTRUCTION_PAIRS.map(([a, b], i) => {
-              const idxA = ELEMENT_ORDER.indexOf(a)
-              const idxB = ELEMENT_ORDER.indexOf(b)
-              const vA = vertices[idxA]
-              const vB = vertices[idxB]
-              return (
-                <line
-                  key={i}
-                  x1={vA.x}
-                  y1={vA.y}
-                  x2={vB.x}
-                  y2={vB.y}
-                />
-              )
-            })}
-          </g>
+    <div className="flex flex-col items-center">
+      <div className="w-full max-w-[360px] aspect-square relative mx-auto">
+        <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full drop-shadow-xl">
+          {/* Outer ring glow */}
+          <circle cx={center} cy={center} r={radius + 60} fill="none" stroke={THEME_GOLD} strokeWidth="1" strokeOpacity="0.1" />
+          <circle cx={center} cy={center} r={radius + 40} fill="none" stroke={THEME_GOLD} strokeWidth="1" strokeOpacity="0.2" />
 
-          {/* Generation cycle (solid arrows) */}
-          <g stroke="rgba(212,175,55,0.5)" strokeWidth="2" fill="none">
-            {vertices.map((v, i) => {
-              const next = vertices[(i + 1) % 5]
-              const midX = (v.x + next.x) / 2
-              const midY = (v.y + next.y) / 2
-              return (
-                <line
-                  key={i}
-                  x1={v.x}
-                  y1={v.y}
-                  x2={next.x}
-                  y2={next.y}
-                />
-              )
-            })}
-          </g>
+          {/* Generation cycle (pentagon outline) */}
+          <polygon points={outerPath} fill="none" stroke={THEME_GOLD} strokeWidth="2" strokeOpacity="0.3" />
+
+          {/* Control cycle (star) */}
+          <path
+            d={`M${points[0].x},${points[0].y} L${points[2].x},${points[2].y} L${points[4].x},${points[4].y} L${points[1].x},${points[1].y} L${points[3].x},${points[3].y} Z`}
+            fill="none" stroke={THEME_GOLD} strokeWidth="1" strokeOpacity="0.15"
+          />
+
+          {/* Radar polygon (filled shadow area) */}
+          <defs>
+            <radialGradient id="radarGradient" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0%" stopColor={THEME_GOLD} stopOpacity="0.4" />
+              <stop offset="100%" stopColor={THEME_GOLD} stopOpacity="0.1" />
+            </radialGradient>
+          </defs>
+          <polygon
+            points={radarPath}
+            fill="url(#radarGradient)"
+            stroke={THEME_GOLD}
+            strokeWidth="2"
+            strokeOpacity="0.8"
+            style={{ filter: 'drop-shadow(0 0 10px rgba(212, 175, 55, 0.3))' }}
+          />
 
           {/* Element nodes */}
-          {ELEMENT_ORDER.map((elem, i) => {
-            const v = vertices[i]
-            const count = counts[elem] || 0
-            const scale = maxCount > 0 ? 0.4 + (count / maxCount) * 0.6 : 0.6
-            const nodeR = 22 * scale
-            const color = ELEMENT_COLORS[elem] || '#d4af37'
+          {points.map((p) => {
+            const style = ELEMENT_STYLES[p.element]
+            const label = localizeElement(p.element, language)
             return (
-              <g key={elem}>
+              <g key={p.element}>
                 <circle
-                  cx={v.x}
-                  cy={v.y}
-                  r={nodeR}
-                  fill={color}
-                  fillOpacity={0.3 + (count / maxCount) * 0.5}
-                  stroke={color}
-                  strokeWidth="2"
-                  className="transition-all duration-300"
+                  cx={p.x} cy={p.y} r={nodeRadius}
+                  fill="#121216" stroke={style.color} strokeWidth="3"
+                  style={{ filter: `drop-shadow(${style.glow})` }}
                 />
                 <text
-                  x={v.x}
-                  y={v.y - 4}
-                  textAnchor="middle"
-                  className="text-[10px] font-bold"
-                  style={{ fill: color }}
+                  x={p.x} y={p.y - 6}
+                  textAnchor="middle" fill="#fff"
+                  fontSize="18" fontWeight="bold" fontFamily="sans-serif"
                 >
-                  {elem}
+                  {p.percent}%
                 </text>
                 <text
-                  x={v.x}
-                  y={v.y + 10}
-                  textAnchor="middle"
-                  className="text-[9px]"
-                  style={{ fill: '#a3a3a3' }}
+                  x={p.x} y={p.y + 14}
+                  textAnchor="middle" fill={style.color}
+                  fontSize="13" fontWeight="600" fontFamily="serif"
                 >
-                  {count}
+                  {label}
                 </text>
               </g>
             )
@@ -163,21 +130,10 @@ export default function ElementWheel({ elements, language = 'en', customAdvice =
         </svg>
       </div>
 
-      {/* Balance label */}
-      <p className="text-sm font-semibold text-amber-200 text-center">
-        {balanceLabel}
-      </p>
-
-      {/* Actionable advice */}
+      {/* AI Advice Text */}
       {recommendations && (
-        <div className="rounded-lg border border-white/5 bg-neutral-950/60 p-3 text-sm text-amber-50">
-          <p className="font-medium text-amber-200 mb-1">
-            {language === 'en' && 'Actionable advice'}
-            {language === 'zh-TW' && '實用建議'}
-            {language === 'zh-CN' && '实用建议'}
-            {language === 'ko' && '실천 가능한 조언'}
-          </p>
-          <SectionContent content={recommendations} className="text-neutral-300" />
+        <div className="mt-8 w-full">
+          <SectionContent content={recommendations} />
         </div>
       )}
     </div>

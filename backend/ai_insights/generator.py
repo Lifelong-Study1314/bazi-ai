@@ -5,7 +5,7 @@ AI Insights Generation using DeepSeek Streaming
 import asyncio
 import re
 from typing import AsyncGenerator
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, AsyncAzureOpenAI
 from .prompts import (
     get_analysis_prompt,
     get_system_message,
@@ -15,6 +15,8 @@ from .prompts import (
     get_annual_forecast_prompt,
     get_age_period_prompt,
     get_age_periods_timeline_prompt,
+    get_use_god_prompt,
+    get_pillar_interactions_prompt,
 )
 from config import get_settings
 import logging
@@ -25,6 +27,8 @@ SECTION_PROMPTS = {
     "five_elements": get_five_elements_prompt,
     "ten_gods": get_ten_gods_prompt,
     "seasonal_strength": get_seasonal_strength_prompt,
+    "use_god": get_use_god_prompt,
+    "pillar_interactions": get_pillar_interactions_prompt,
     "annual_forecast": get_annual_forecast_prompt,
     "current_age_period": get_age_period_prompt,
     "age_periods_timeline": get_age_periods_timeline_prompt,
@@ -93,14 +97,40 @@ class InsightGenerator:
     
     def __init__(self):
         settings = get_settings()
-        self.client = AsyncOpenAI(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
-            timeout=float(settings.api_timeout)
-        )
-        self.model = settings.deepseek_model
-        self.temperature = settings.deepseek_temperature
+        self.provider = (settings.ai_provider or "deepseek").lower().strip()
+        if self.provider == "azure":
+            self.client = AsyncAzureOpenAI(
+                api_key=settings.azure_api_key,
+                azure_endpoint=settings.azure_endpoint,
+                api_version=settings.azure_api_version,
+                timeout=float(settings.api_timeout),
+            )
+            self.model = settings.azure_deployment
+            self.temperature = settings.openai_temperature
+        else:
+            self.client = AsyncOpenAI(
+                api_key=settings.deepseek_api_key,
+                base_url=settings.deepseek_base_url,
+                timeout=float(settings.api_timeout),
+            )
+            self.model = settings.deepseek_model
+            self.temperature = settings.deepseek_temperature
         self.max_tokens = settings.max_tokens
+
+    def _build_completion_params(self, system_message: str, user_prompt: str) -> dict:
+        params = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_prompt},
+            ],
+            "stream": True,
+        }
+        # OpenAI client (OpenAI + Azure) uses max_tokens for chat.completions.create
+        params["max_tokens"] = self.max_tokens
+        if self.provider != "azure":
+            params["temperature"] = self.temperature
+        return params
     
     async def generate_insights_stream(
         self, 
@@ -114,14 +144,7 @@ class InsightGenerator:
         
         try:
             stream = await self.client.chat.completions.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": user_prompt}
-                ],
-                stream=True
+                **self._build_completion_params(system_message, user_prompt)
             )
             
             async for chunk in stream:
@@ -178,14 +201,7 @@ async def generate_section_non_stream(
     gen = InsightGenerator()
     try:
         stream = await gen.client.chat.completions.create(
-            model=gen.model,
-            max_tokens=gen.max_tokens,
-            temperature=gen.temperature,
-            messages=[
-                {"role": "system", "content": system_msg},
-                {"role": "user", "content": user_prompt},
-            ],
-            stream=True,
+            **gen._build_completion_params(system_msg, user_prompt)
         )
         full_text = ""
         async for chunk in stream:
@@ -229,9 +245,23 @@ async def generate_sections_as_completed(
 
     async def _gen_with_stagger(key: str, delay: float) -> tuple[str, str | None]:
         await asyncio.sleep(delay)
-        content = await generate_section_non_stream(bazi_data, key, language)
+        try:
+            content = await asyncio.wait_for(
+                generate_section_non_stream(bazi_data, key, language),
+                timeout=90,  # 90-second timeout per section
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"Section {key} timed out (attempt 1)")
+            content = None
         if content is None:
-            content = await generate_section_non_stream(bazi_data, key, language)
+            try:
+                content = await asyncio.wait_for(
+                    generate_section_non_stream(bazi_data, key, language),
+                    timeout=90,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(f"Section {key} timed out (attempt 2)")
+                content = None
         return (key, content)
 
     tasks = [asyncio.create_task(_gen_with_stagger(k, i * stagger_ms / 1000.0)) for i, k in enumerate(keys)]

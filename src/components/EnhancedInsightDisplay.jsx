@@ -152,42 +152,42 @@ export const EnhancedInsightDisplay = ({ insights, language = 'en' }) => {
 
   const getSectionIcon = (title) => {
     const iconMap = {
-      'Chart Structure': '📊',
-      'Career & Finance': '💼',
-      'Relationships': '💑',
-      'Health': '🏥',
-      'Personality': '✨',
-      'Luck Cycles': '🔄',
-      'Life Guidance': '🎯',
-      'Yearly Forecast': '📅',
-      '流年展望': '📅',
-      '命盘结构与强弱分析': '📊',
-      '命盤結構與強弱分析': '📊',
-      '职业与财富': '💼',
-      '職業與財富': '💼',
-      '关系与婚姻': '💑',
-      '關係與婚姻': '💑',
-      '健康与养生': '🏥',
-      '健康與養生': '🏥',
-      '性格与品质': '✨',
-      '性格與品質': '✨',
-      '幸运周期与时机': '🔄',
-      '幸運周期與時機': '🔄',
-      '人生指引与个人发展': '🎯',
-      '人生指引與個人發展': '🎯',
-      '사주 구조와 강약 분석': '📊',
-      '직업과 재물': '💼',
-      '관계와 결혼': '💑',
-      '건강과 양생': '🏥',
-      '성격과 품성': '✨',
-      '대운 주기와 시기': '🔄',
-      '인생 가이드와 자기계발': '🎯',
-      '연간 전망': '📅',
+      'Chart Structure': '◎',
+      'Career & Finance': '◈',
+      'Relationships': '◇',
+      'Health': '✦',
+      'Personality': '◆',
+      'Luck Cycles': '↻',
+      'Life Guidance': '▸',
+      'Yearly Forecast': '⟡',
+      '流年展望': '⟡',
+      '命盘结构与强弱分析': '◎',
+      '命盤結構與強弱分析': '◎',
+      '职业与财富': '◈',
+      '職業與財富': '◈',
+      '关系与婚姻': '◇',
+      '關係與婚姻': '◇',
+      '健康与养生': '✦',
+      '健康與養生': '✦',
+      '性格与品质': '◆',
+      '性格與品質': '◆',
+      '幸运周期与时机': '↻',
+      '幸運周期與時機': '↻',
+      '人生指引与个人发展': '▸',
+      '人生指引與個人發展': '▸',
+      '사주 구조와 강약 분석': '◎',
+      '직업과 재물': '◈',
+      '관계와 결혼': '◇',
+      '건강과 양생': '✦',
+      '성격과 품성': '◆',
+      '대운 주기와 시기': '↻',
+      '인생 가이드와 자기계발': '▸',
+      '연간 전망': '⟡',
     };
     for (const [key, icon] of Object.entries(iconMap)) {
       if (title.includes(key)) return icon;
     }
-    return '📌';
+    return '◉';
   };
 
   const getSectionColor = (index) => {
@@ -334,7 +334,80 @@ export const EnhancedInsightDisplay = ({ insights, language = 'en' }) => {
   );
 };
 
-// Helper to format content
+/**
+ * Rich content formatter for the comprehensive insights sections.
+ * Handles **bold**, ### sub-headers, bullet points, numbered lists,
+ * keyword:value patterns, imperative verb accents, and separators.
+ *
+ * Shares the same keyword set as SectionContent.jsx for consistency.
+ */
+
+// ── Positive / negative keyword sets (mirrors SectionContent.jsx) ──
+const FC_POSITIVE = new Set([
+  'Do', 'Focus on', 'Lucky Months', 'Opportunities', 'Recommendation', 'Action',
+  '做', '專注', '專注於', '吉月', '機遇', '建議', '行動',
+  '做', '专注', '专注于', '吉月', '机遇', '建议', '行动',
+  '하세요', '집중', '길월', '기회', '조언', '행동',
+]);
+const FC_NEGATIVE = new Set([
+  'Avoid', 'Caution Months', 'Challenges', 'Caution', 'Note',
+  '避免', '凶月', '挑戰', '注意',
+  '避免', '凶月', '挑战', '注意',
+  '피하세요', '흉월', '도전', '주의',
+]);
+
+// All labels recognised as keyword lines (mirrors SectionContent.jsx)
+const FC_ALL_LABELS = [
+  // EN
+  'Overview', 'Theme', 'Role', 'Interaction', 'Career', 'Relationships',
+  'Meaning', 'This Year', 'This Season', 'This Month',
+  'Why', 'Daily Actions', 'Key Impact',
+  'Key Focus', 'Timing', 'Present', 'Missing',
+  'Lucky Months', 'Caution Months',
+  'Opportunities', 'Challenges',
+  'Do', 'Avoid', 'Focus on',
+  'Recommendation', 'Suggestion', 'Action', 'Caution', 'Note',
+  'Q1', 'Q2', 'Q3', 'Q4',
+  // Compatibility-specific
+  'Analogy', 'Zodiac', 'Complementarity',
+  // zh-TW
+  '概述', '主題', '角色', '互動', '事業', '感情',
+  '含義', '今年', '本季', '本月',
+  '原因', '日常行動', '關鍵影響',
+  '關鍵重點', '時機', '時間指引', '出現', '缺失',
+  '吉月', '凶月', '機遇', '挑戰',
+  '做', '避免', '專注', '專注於',
+  '建議', '注意', '行動', '重點', '提示',
+  // Compatibility-specific
+  '比喻', '生肖', '互補',
+  // zh-CN
+  '概述', '主题', '角色', '互动', '事业', '感情',
+  '含义', '今年', '本季', '本月',
+  '原因', '日常行动', '关键影响',
+  '关键重点', '时机', '时间指引', '出现', '缺失',
+  '吉月', '凶月', '机遇', '挑战',
+  '做', '避免', '专注', '专注于',
+  '建议', '注意', '行动', '重点', '提示',
+  // Compatibility-specific
+  '比喻', '生肖', '互补',
+  // Korean
+  '개요', '주제', '역할', '상호작용', '직업', '인간관계',
+  '의미', '올해', '이번 계절', '이번 달',
+  '이유', '일상 행동', '핵심 영향',
+  '핵심 초점', '시기', '출현', '결핍',
+  '길월', '흉월', '기회', '도전',
+  '하세요', '피하세요', '집중',
+  '조언', '주의', '행동',
+  // Compatibility-specific
+  '비유', '띠', '상호보완',
+];
+
+const fcSorted = [...new Set(FC_ALL_LABELS)].sort((a, b) => b.length - a.length);
+const fcEscaped = fcSorted.map(l => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+// (.*) allows empty value — label-only lines act as section headers
+const FC_KW_RE = new RegExp(`^(${fcEscaped.join('|')}|Q[1-4](?:\\s*[（(][^)）]*[)）])?)[：:]\\s*(.*)$`);
+
+
 const FormattedContent = ({ content }) => {
   if (!content || typeof content !== 'string') {
     return <p>No content available</p>;
@@ -342,50 +415,93 @@ const FormattedContent = ({ content }) => {
 
   const lines = content.split('\n');
 
+  const renderInline = (text) => {
+    if (!text || !text.includes('**')) return text;
+    return text.split(/\*\*([^*]+)\*\*/).map((part, idx) => {
+      if (idx % 2 === 1) {
+        const isLabel = /[:：]\s*$/.test(part);
+        return <strong key={idx} className={isLabel ? 'kw-label' : ''}>{part}</strong>;
+      }
+      return part || null;
+    });
+  };
+
   return (
     <div className="formatted-content">
       {lines.map((line, i) => {
         const trimmed = line.trim();
-        if (!trimmed) return null;
+        if (!trimmed) return <div key={i} className="h-2" aria-hidden />;
 
-        // Bold text (between **)
-        if (trimmed.includes('**')) {
+        // Sub-header: ### or ####
+        if (/^#{2,4}\s+/.test(trimmed)) {
+          const text = trimmed.replace(/^#{2,4}\s+/, '');
           return (
-            <p key={i} className="content-line">
-              {trimmed.split(/\*\*([^*]+)\*\*/).map((part, idx) =>
-                idx % 2 === 1 ? <strong key={idx}>{part}</strong> : part
-              )}
-            </p>
+            <h4 key={i} className="fc-subheader">
+              <span className="fc-accent-bar" />
+              {renderInline(text)}
+            </h4>
           );
         }
 
-        // Bullet points starting with *
-        if (trimmed.startsWith('* ')) {
+        // Bullet points: - or *
+        if (/^[-*]\s+/.test(trimmed)) {
+          const text = trimmed.replace(/^[-*]\s+/, '');
           return (
-            <div key={i} className="bullet-point">
-              • {trimmed.replace(/^\*\s*/, '')}
+            <div key={i} className="fc-bullet">
+              <span className="fc-bullet-dot">◆</span>
+              <span>{renderInline(text)}</span>
             </div>
           );
         }
 
-        // Bullet points starting with -
-        if (trimmed.startsWith('- ')) {
+        // Numbered list: 1. or 1)
+        const numMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+        if (numMatch) {
           return (
-            <div key={i} className="bullet-point">
-              • {trimmed.replace(/^-\s*/, '')}
+            <div key={i} className="fc-numbered">
+              <span className="fc-num-circle">{numMatch[1]}</span>
+              <span>{renderInline(numMatch[2])}</span>
             </div>
           );
         }
 
-        // Section separator lines (---)
+        // Separator
         if (trimmed === '---' || trimmed === '***') {
           return <div key={i} className="section-divider" />;
         }
 
-        // Regular paragraph
+        // Keyword line: Label: value  OR  Label: (empty → section header)
+        const kwMatch = trimmed.match(FC_KW_RE);
+        if (kwMatch) {
+          const label = kwMatch[1];
+          const value = (kwMatch[2] || '').trim();
+          const isNeg = FC_NEGATIVE.has(label);
+          const isPos = FC_POSITIVE.has(label);
+
+          if (!value) {
+            // Label header (no value) — acts as section header for bullets below
+            return (
+              <div key={i} className={`fc-label-header ${isNeg ? 'fc-lh-neg' : isPos ? 'fc-lh-pos' : ''}`}>
+                <span className={`fc-lh-bar ${isNeg ? 'fc-lh-bar-neg' : isPos ? 'fc-lh-bar-pos' : ''}`} />
+                <span className="fc-lh-text">{label}</span>
+              </div>
+            );
+          }
+
+          return (
+            <div key={i} className="fc-keyword-line">
+              <span className={`fc-keyword ${isNeg ? 'fc-kw-avoid' : isPos ? 'fc-kw-do' : ''}`}>
+                {label}:
+              </span>
+              <span>{renderInline(value)}</span>
+            </div>
+          );
+        }
+
+        // Regular paragraph (with inline bold support)
         return (
           <p key={i} className="content-line">
-            {trimmed}
+            {renderInline(trimmed)}
           </p>
         );
       })}

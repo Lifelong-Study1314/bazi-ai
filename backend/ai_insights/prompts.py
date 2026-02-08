@@ -312,7 +312,7 @@ In particular, please:
 # ==================== Section-specific prompts (150 words max each) ====================
 
 def _get_section_system_message(language: str) -> str:
-    """System message for section prompts: concise, actionable, 150 words max."""
+    """System message for section prompts: concise, actionable, strict template."""
     lang_map = {
         "zh-TW": "繁體中文",
         "zh-CN": "简体中文",
@@ -320,11 +320,26 @@ def _get_section_system_message(language: str) -> str:
     }
     lang_name = lang_map.get(language, "English")
     base = f"You are a BAZI expert. Respond in {lang_name}. Maximum 150 words. Be concise and actionable."
-    base += f" Respond ONLY in {lang_name}. Do not mix languages—no English words in Chinese responses, no Chinese in English responses."
-    base += " Include at least 2 specific, actionable steps (imperative: Do..., Avoid..., Focus on...)."
-    base += " Include time-based guidance (This month..., During this season..., In your 40s...)."
-    base += " Use concrete examples relevant to the user's chart data."
-    base += " Use plain prose or numbered lists. Use newlines between points. Do NOT use markdown ** for bold—use plain text. Keep formatting clean."
+    if language in ("zh-TW", "zh-CN"):
+        base += f" Respond ONLY in {lang_name}. Do not include any English words."
+    elif language == "ko":
+        base += f" Respond ONLY in {lang_name}. Do not include English words. Chinese characters (Hanja) for BAZI terms are acceptable."
+    else:
+        base += f" Respond ONLY in {lang_name}. Chinese characters for BAZI terms (e.g. pillar names) are acceptable for authenticity."
+    base += (
+        " CRITICAL: Follow the EXACT output template in the user message."
+        " Use the EXACT label names provided (e.g. 'Theme:', 'Do:', 'Avoid:')."
+        " Each label must appear on its own line, followed by a colon and its value."
+        " Bullet points under a label use '- ' prefix."
+        " Do NOT add extra labels, do NOT reorder labels, do NOT skip any label."
+        " Do NOT use numbered lists (1. 2. 3.) — use ONLY the label: value format and '- ' bullet points."
+        " Do NOT use markdown ** for bold — use plain text."
+        " Use concrete examples relevant to the user's chart data."
+    )
+    if language in ("zh-TW", "zh-CN"):
+        base += " IMPORTANT: All label names must be in Chinese as specified in the template. Do NOT use English labels like 'Do:', 'Avoid:', 'Focus:' — use the exact Chinese labels provided."
+    elif language == "ko":
+        base += " IMPORTANT: All label names must be in Korean as specified in the template. Do NOT use English labels like 'Do:', 'Avoid:', 'Focus:' — use the exact Korean labels provided."
     return base
 
 
@@ -361,19 +376,54 @@ def _get_ten_god_pillar_locations(four_pillars: dict, strongest_key: str) -> str
     return ", ".join(locations) if locations else ""
 
 
-def _get_pillar_naming(stem_dict: dict, branch_dict: dict) -> str:
-    """e.g. 丙午 (Fire Horse)"""
+_ZODIAC_I18N = {
+    "Rat":     {"en": "Rat",     "zh-TW": "鼠", "zh-CN": "鼠", "ko": "쥐"},
+    "Ox":      {"en": "Ox",      "zh-TW": "牛", "zh-CN": "牛", "ko": "소"},
+    "Tiger":   {"en": "Tiger",   "zh-TW": "虎", "zh-CN": "虎", "ko": "호랑이"},
+    "Rabbit":  {"en": "Rabbit",  "zh-TW": "兔", "zh-CN": "兔", "ko": "토끼"},
+    "Dragon":  {"en": "Dragon",  "zh-TW": "龍", "zh-CN": "龙", "ko": "용"},
+    "Snake":   {"en": "Snake",   "zh-TW": "蛇", "zh-CN": "蛇", "ko": "뱀"},
+    "Horse":   {"en": "Horse",   "zh-TW": "馬", "zh-CN": "马", "ko": "말"},
+    "Goat":    {"en": "Goat",    "zh-TW": "羊", "zh-CN": "羊", "ko": "양"},
+    "Monkey":  {"en": "Monkey",  "zh-TW": "猴", "zh-CN": "猴", "ko": "원숭이"},
+    "Rooster": {"en": "Rooster", "zh-TW": "雞", "zh-CN": "鸡", "ko": "닭"},
+    "Dog":     {"en": "Dog",     "zh-TW": "狗", "zh-CN": "狗", "ko": "개"},
+    "Pig":     {"en": "Pig",     "zh-TW": "豬", "zh-CN": "猪", "ko": "돼지"},
+}
+
+def _localize_zodiac(zodiac: str, lang: str) -> str:
+    return _ZODIAC_I18N.get(zodiac, {}).get(lang, zodiac or "")
+
+
+def _get_pillar_naming(stem_dict: dict, branch_dict: dict, language: str = "en") -> str:
+    """Pillar naming localized by language.
+    en:    丙午 (Fire Horse)
+    zh-*:  丙午
+    ko:    丙午 (화 말)
+    """
     stem_cn = stem_dict.get("name_cn", "")
     branch_cn = branch_dict.get("name_cn", "")
+    base = f"{stem_cn}{branch_cn}" if stem_cn and branch_cn else ""
+    if not base:
+        return ""
+    if language in ("zh-TW", "zh-CN"):
+        return base  # Chinese-only, no English annotation
     stem_elem = stem_dict.get("element", "")
     branch_zodiac = branch_dict.get("zodiac", "")
-    if stem_cn and branch_cn and stem_elem and branch_zodiac:
-        return f"{stem_cn}{branch_cn} ({stem_elem} {branch_zodiac})"
-    return f"{stem_cn}{branch_cn}" if stem_cn and branch_cn else ""
+    if language == "ko":
+        elem_ko = _localize_elem(stem_elem, "ko")
+        zodiac_ko = _localize_zodiac(branch_zodiac, "ko")
+        if elem_ko and zodiac_ko:
+            return f"{base} ({elem_ko} {zodiac_ko})"
+        return base
+    # English
+    if stem_elem and branch_zodiac:
+        return f"{base} ({stem_elem} {branch_zodiac})"
+    return base
 
 
 def get_five_elements_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
-    """Five Elements: elements.counts, elements.analysis, day_master → brief interpretation + actionable advice."""
+    """Five Elements: elements.counts, elements.analysis, day_master → strict template."""
     elements = bazi_data.get("elements", {})
     counts = elements.get("counts", {})
     analysis = elements.get("analysis", {})
@@ -383,37 +433,64 @@ def get_five_elements_prompt(bazi_data: dict, language: str = "en") -> tuple[str
 
     elem_str = ", ".join([f"{k}:{v}" for k, v in counts.items()])
     balance = analysis.get("balance", "")
-    recs = analysis.get("recommendations", "")
     elements_in_pillars = _get_elements_in_pillars(bazi_data)
     absent = _get_absent_elements(counts)
     absent_str = ", ".join(absent) if absent else "none"
 
     system = _get_section_system_message(language)
     if language == "zh-TW":
-        user = f"""五行統計：{elem_str}。日主：{day_master}。平衡：{balance}。
-四柱五行分布：{elements_in_pillars}。缺失五行：{absent_str}。
-最突出十神：{ten_god_name}。請說明此十神如何影響五行平衡。
-必須：1) 明確指出哪些五行在四柱中出現/缺失；2) 根據確切數量給出3個具體生活行動（如「因水為0，週三穿藍色」）；3) 用祈使句（做…、避免…、專注…）。150字內。用繁體中文回應。"""
+        user = (
+            f"五行統計：{elem_str}。日主：{day_master}。平衡：{balance}。\n"
+            f"四柱五行分布：{elements_in_pillars}。缺失五行：{absent_str}。最突出十神：{ten_god_name}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號）：\n\n"
+            f"概述：（1–2句說明五行整體平衡狀況及對命主的影響）\n"
+            f"出現：（列出在四柱中出現的五行及數量）\n"
+            f"缺失：（列出缺失的五行，或「無」）\n\n"
+            f"做：\n- （具體行動1，如「因水為0，週三穿藍色」）\n- （具體行動2）\n- （具體行動3）\n\n"
+            f"避免：\n- （具體避免事項1）\n- （具體避免事項2）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
     elif language == "zh-CN":
-        user = f"""五行统计：{elem_str}。日主：{day_master}。平衡：{balance}。
-四柱五行分布：{elements_in_pillars}。缺失五行：{absent_str}。
-最突出十神：{ten_god_name}。请说明此十神如何影响五行平衡。
-必须：1) 明确指出哪些五行在四柱中出现/缺失；2) 根据确切数量给出3个具体生活行动（如「因水为0，周三穿蓝色」）；3) 用祈使句（做…、避免…、专注…）。150字内。用简体中文回应。"""
+        user = (
+            f"五行统计：{elem_str}。日主：{day_master}。平衡：{balance}。\n"
+            f"四柱五行分布：{elements_in_pillars}。缺失五行：{absent_str}。最突出十神：{ten_god_name}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号）：\n\n"
+            f"概述：（1–2句说明五行整体平衡状况及对命主的影响）\n"
+            f"出现：（列出在四柱中出现的五行及数量）\n"
+            f"缺失：（列出缺失的五行，或「无」）\n\n"
+            f"做：\n- （具体行动1，如「因水为0，周三穿蓝色」）\n- （具体行动2）\n- （具体行动3）\n\n"
+            f"避免：\n- （具体避免事项1）\n- （具体避免事项2）\n\n"
+            f"150字内。用简体中文回应。"
+        )
     elif language == "ko":
-        user = f"""오행 통계：{elem_str}。일주：{day_master}。균형：{balance}。
-사주 오행 분포：{elements_in_pillars}。결핍 오행：{absent_str}。
-가장 두드러진 십성：{ten_god_name}。이 십성이 오행 균형에 어떻게 영향을 미치는지 설명해 주세요.
-필수：1) 사주에서 어떤 오행이 출현/결핍되는지 명시；2) 정확한 수치에 따라 3가지 구체적 생활 행동 제시（예: 수가 0이므로 수요일에 파란색 착용）；3) 명령형 사용（…하세요、…피하세요、…집중하세요）。150자 이내。한국어로 응답해 주세요。"""
+        user = (
+            f"오행 통계：{elem_str}。일주：{day_master}。균형：{balance}。\n"
+            f"사주 오행 분포：{elements_in_pillars}。결핍 오행：{absent_str}。가장 두드러진 십성：{ten_god_name}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론）：\n\n"
+            f"개요：（1–2문장으로 오행 전체 균형 상태와 명주에 대한 영향）\n"
+            f"출현：（사주에 출현하는 오행과 수량 나열）\n"
+            f"결핍：（결핍 오행 나열 또는「없음」）\n\n"
+            f"하세요：\n- （구체적 행동1，예: 수가 0이므로 수요일에 파란색 착용）\n- （구체적 행동2）\n- （구체적 행동3）\n\n"
+            f"피하세요：\n- （구체적 회피 사항1）\n- （구체적 회피 사항2）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
     else:
-        user = f"""Five Elements: {elem_str}. Day Master: {day_master}. Balance: {balance}.
-Elements in pillars: {elements_in_pillars}. Absent elements: {absent_str}.
-Strongest Ten God: {ten_god_name}. Explain how this Ten God affects your element balance.
-MUST: 1) State which elements appear/are absent in the four pillars; 2) Give 3 specific life actions based on exact counts (e.g. "Since Water is 0, wear blue on Wednesdays"); 3) Use imperative verbs (Do..., Avoid..., Focus on...). 150 words max. Respond in English."""
+        user = (
+            f"Five Elements: {elem_str}. Day Master: {day_master}. Balance: {balance}.\n"
+            f"Elements in pillars: {elements_in_pillars}. Absent elements: {absent_str}. Strongest Ten God: {ten_god_name}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Overview: (1-2 sentences on overall element balance and its effect on the person)\n"
+            f"Present: (list elements present with counts)\n"
+            f"Missing: (list absent elements, or 'None')\n\n"
+            f"Do:\n- (specific action 1, e.g. 'Since Water is 0, wear blue on Wednesdays')\n- (specific action 2)\n- (specific action 3)\n\n"
+            f"Avoid:\n- (specific avoidance 1)\n- (specific avoidance 2)\n\n"
+            f"150 words max. Respond in English."
+        )
     return (system, user)
 
 
 def get_ten_gods_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
-    """Ten Gods: strongest_ten_god, four_pillars summary → what it means + how to use."""
+    """Ten Gods: strongest_ten_god, four_pillars summary → strict template."""
     strongest = bazi_data.get("strongest_ten_god", {})
     name_en = strongest.get("name_en", "")
     name_cn = strongest.get("name_cn", "")
@@ -435,26 +512,62 @@ def get_ten_gods_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str
 
     system = _get_section_system_message(language)
     if language == "zh-TW":
-        user = f"""四柱：{pillars_str}。日主：{day_master}。最突出十神：{name_cn}（{name_en}），出現{count}次。
-此十神出現位置：{locations or "見於命盤"}。得令狀態：{seasonal_str}。
-請說明：1) 此十神與日主五行的互動（生剋關係）；2) 考慮得令狀態，如何表達此十神能量；3) 2–3個事業與關係的具體表現；4) 引用具體柱位給建議。150字內。用繁體中文回應。"""
+        user = (
+            f"四柱：{pillars_str}。日主：{day_master}。最突出十神：{name_cn}，出現{count}次。\n"
+            f"出現位置：{locations or '見於命盤'}。得令狀態：{seasonal_str}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號）：\n\n"
+            f"角色：（此十神代表什麼，1句話）\n"
+            f"互動：（此十神與日主五行的生剋關係，結合得令狀態說明）\n\n"
+            f"事業：\n- （事業/工作表現1）\n- （事業/工作表現2）\n\n"
+            f"感情：\n- （感情/關係表現1）\n- （感情/關係表現2）\n\n"
+            f"做：（利用此十神能量的具體行動）\n"
+            f"避免：（此十神過強時應避免什麼）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
     elif language == "zh-CN":
-        user = f"""四柱：{pillars_str}。日主：{day_master}。最突出十神：{name_cn}（{name_en}），出现{count}次。
-此十神出现位置：{locations or "见于命盘"}。得令状态：{seasonal_str}。
-请说明：1) 此十神与日主五行的互动（生克关系）；2) 考虑得令状态，如何表达此十神能量；3) 2–3个事业与关系的具体表现；4) 引用具体柱位给建议。150字内。用简体中文回应。"""
+        user = (
+            f"四柱：{pillars_str}。日主：{day_master}。最突出十神：{name_cn}，出现{count}次。\n"
+            f"出现位置：{locations or '见于命盘'}。得令状态：{seasonal_str}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号）：\n\n"
+            f"角色：（此十神代表什么，1句话）\n"
+            f"互动：（此十神与日主五行的生克关系，结合得令状态说明）\n\n"
+            f"事业：\n- （事业/工作表现1）\n- （事业/工作表现2）\n\n"
+            f"感情：\n- （感情/关系表现1）\n- （感情/关系表现2）\n\n"
+            f"做：（利用此十神能量的具体行动）\n"
+            f"避免：（此十神过强时应避免什么）\n\n"
+            f"150字内。用简体中文回应。"
+        )
     elif language == "ko":
-        user = f"""사주：{pillars_str}。일주：{day_master}。가장 두드러진 십성：{name_cn}（{name_en}），{count}회 출현。
-이 십성 출현 위치：{locations or "명반 내"}。득령 상태：{seasonal_str}。
-설명해 주세요：1) 이 십성과 일주 오행의 상호작용（생극 관계）；2) 득령 상태를 고려하여 이 십성 에너지를 어떻게 표현할지；3) 직업과 관계의 구체적 표현 2–3가지；4) 구체적 주위를 인용하여 조언。150자 이내。한국어로 응답해 주세요。"""
+        user = (
+            f"사주：{pillars_str}。일주：{day_master}。가장 두드러진 십성：{name_cn}，{count}회 출현。\n"
+            f"출현 위치：{locations or '명반 내'}。득령 상태：{seasonal_str}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론）：\n\n"
+            f"역할：（이 십성이 대표하는 것，1문장）\n"
+            f"상호작용：（이 십성과 일주 오행의 생극 관계，득령 상태와 연결하여 설명）\n\n"
+            f"직업：\n- （직업/업무 표현1）\n- （직업/업무 표현2）\n\n"
+            f"인간관계：\n- （인간관계 표현1）\n- （인간관계 표현2）\n\n"
+            f"하세요：（이 십성 에너지를 활용하는 구체적 행동）\n"
+            f"피하세요：（이 십성이 과한 경우 피해야 할 것）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
     else:
-        user = f"""Four Pillars: {pillars_str}. Day Master: {day_master}. Strongest Ten God: {name_en} ({name_cn}), appears {count} times.
-Locations: {locations or "in chart"}. Seasonal Strength: {seasonal_str}.
-Explain: 1) How this Ten God INTERACTS with Day Master element (generates/destroys/same); 2) Considering Seasonal Strength, how to express this Ten God energy; 3) 2–3 career AND relationship manifestations; 4) Reference specific pillar(s) in advice. 150 words max. Respond in English."""
+        user = (
+            f"Four Pillars: {pillars_str}. Day Master: {day_master}. Strongest Ten God: {name_en} ({name_cn}), appears {count} times.\n"
+            f"Locations: {locations or 'in chart'}. Seasonal Strength: {seasonal_str}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Role: (what this Ten God represents, 1 sentence)\n"
+            f"Interaction: (how it interacts with Day Master element — generates/controls/same — considering Seasonal Strength)\n\n"
+            f"Career:\n- (career/work manifestation 1)\n- (career/work manifestation 2)\n\n"
+            f"Relationships:\n- (relationship manifestation 1)\n- (relationship manifestation 2)\n\n"
+            f"Do: (specific action to harness this Ten God energy)\n"
+            f"Avoid: (what to avoid when this Ten God is dominant)\n\n"
+            f"150 words max. Respond in English."
+        )
     return (system, user)
 
 
 def get_seasonal_strength_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
-    """Seasonal Strength: seasonal_strength, day_master → current state + recommended focus."""
+    """Seasonal Strength: seasonal_strength, day_master → strict template."""
     ss = bazi_data.get("seasonal_strength", {})
     strength = ss.get("strength", "")
     expl_en = ss.get("explanation_en", "")
@@ -478,26 +591,62 @@ def get_seasonal_strength_prompt(bazi_data: dict, language: str = "en") -> tuple
     system = _get_section_system_message(language)
     expl_ko = ss.get("explanation_ko", "") or expl_en
     if language == "zh-TW":
-        user = f"""日主：{day_master}。得令狀態：{strength}。說明：{expl_tw or expl_en}
-月柱：{month_str}。流年：{annual_str}。
-請說明：1) 出生月份季節如何影響日主五行；2) 結合流年{year}，得令如何指導今年決策；3) 當前季節的具體決策建議；4) 時間指引（本月…、本季…）。150字內。用繁體中文回應。"""
+        user = (
+            f"日主：{day_master}。得令狀態：{strength}。說明：{expl_tw or expl_en}\n"
+            f"月柱：{month_str}。流年：{annual_str}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號）：\n\n"
+            f"含義：（出生月份季節如何影響日主五行，1–2句）\n"
+            f"今年：（結合流年{year}，得令如何指導今年決策）\n\n"
+            f"本季：\n- （當前季節的具體決策建議1）\n- （當前季節的具體決策建議2）\n\n"
+            f"做：（本月或本季的具體行動）\n"
+            f"避免：（本月或本季應避免的事項）\n"
+            f"時機：（最佳時間窗口建議，如「春季前三個月」）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
     elif language == "zh-CN":
-        user = f"""日主：{day_master}。得令状态：{strength}。说明：{expl_cn or expl_en}
-月柱：{month_str}。流年：{annual_str}。
-请说明：1) 出生月份季节如何影响日主五行；2) 结合流年{year}，得令如何指导今年决策；3) 当前季节的具体决策建议；4) 时间指引（本月…、本季…）。150字内。用简体中文回应。"""
+        user = (
+            f"日主：{day_master}。得令状态：{strength}。说明：{expl_cn or expl_en}\n"
+            f"月柱：{month_str}。流年：{annual_str}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号）：\n\n"
+            f"含义：（出生月份季节如何影响日主五行，1–2句）\n"
+            f"今年：（结合流年{year}，得令如何指导今年决策）\n\n"
+            f"本季：\n- （当前季节的具体决策建议1）\n- （当前季节的具体决策建议2）\n\n"
+            f"做：（本月或本季的具体行动）\n"
+            f"避免：（本月或本季应避免的事项）\n"
+            f"时机：（最佳时间窗口建议，如「春季前三个月」）\n\n"
+            f"150字内。用简体中文回应。"
+        )
     elif language == "ko":
-        user = f"""일주：{day_master}。득령 상태：{strength}。설명：{expl_ko}
-월주：{month_str}。유년：{annual_str}。
-설명해 주세요：1) 출생 월의 계절이 일주 오행에 어떻게 영향을 미치는지；2) 유년 {year}와 결합하여 득령이 올해 결정에 어떻게 지침을 주는지；3) 현재 계절의 구체적 결정 조언；4) 시간 지침（이번 달…、이번 계절…）。150자 이내。한국어로 응답해 주세요。"""
+        user = (
+            f"일주：{day_master}。득령 상태：{strength}。설명：{expl_ko}\n"
+            f"월주：{month_str}。유년：{annual_str}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론）：\n\n"
+            f"의미：（출생 월의 계절이 일주 오행에 어떻게 영향을 미치는지，1–2문장）\n"
+            f"올해：（유년 {year}와 결합하여 득령이 올해 결정에 어떻게 지침을 주는지）\n\n"
+            f"이번 계절：\n- （현재 계절의 구체적 결정 조언1）\n- （현재 계절의 구체적 결정 조언2）\n\n"
+            f"하세요：（이번 달 또는 이번 계절의 구체적 행동）\n"
+            f"피하세요：（이번 달 또는 이번 계절에 피해야 할 사항）\n"
+            f"시기：（최적 시간 창 제안，예: 봄철 첫 3개월）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
     else:
-        user = f"""Day Master: {day_master}. Seasonal strength: {strength}. Explanation: {expl_en}
-Month pillar: {month_str}. Annual forecast: {annual_str}.
-Explain: 1) How birth month season AFFECTS Day Master element; 2) With Annual Forecast {year}, how seasonal strength guides decisions this year; 3) Specific decision-making guidance for current season; 4) Time-based guidance (This month..., During this season...). 150 words max. Respond in English."""
+        user = (
+            f"Day Master: {day_master}. Seasonal strength: {strength}. Explanation: {expl_en}\n"
+            f"Month pillar: {month_str}. Annual forecast: {annual_str}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Meaning: (how birth month season affects Day Master element, 1-2 sentences)\n"
+            f"This Year: (how seasonal strength combined with {year} annual pillar guides this year's decisions)\n\n"
+            f"This Season:\n- (specific seasonal guidance 1)\n- (specific seasonal guidance 2)\n\n"
+            f"Do: (specific action for this month or season)\n"
+            f"Avoid: (what to avoid this month or season)\n"
+            f"Timing: (best time window advice, e.g. 'first three months of spring')\n\n"
+            f"150 words max. Respond in English."
+        )
     return (system, user)
 
 
 def get_annual_forecast_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
-    """Annual Forecast: annual_luck, four_pillars → year outlook + key months/quarters."""
+    """Annual Forecast: annual_luck, four_pillars → strict quarterly template."""
     from datetime import datetime
 
     al = bazi_data.get("annual_luck", {})
@@ -505,11 +654,9 @@ def get_annual_forecast_prompt(bazi_data: dict, language: str = "en") -> tuple[s
     year = ap.get("year", "")
     stem = ap.get("stem", {})
     branch = ap.get("branch", {})
-    stem_cn = stem.get("name_cn", "")
-    branch_cn = branch.get("name_cn", "")
     stem_elem = stem.get("element", "")
     branch_zodiac = branch.get("zodiac", "")
-    pillar_naming = _get_pillar_naming(stem, branch)
+    pillar_naming = _get_pillar_naming(stem, branch, language)
     interactions = al.get("interactions", [])
     int_desc = "; ".join([i.get("description", "") for i in interactions]) if interactions else ""
 
@@ -524,12 +671,6 @@ def get_annual_forecast_prompt(bazi_data: dict, language: str = "en") -> tuple[s
             break
     if not current_period and age_periods:
         current_period = age_periods[0]
-    period_str = ""
-    if current_period:
-        sa = current_period.get("start_age", "")
-        ea = current_period.get("end_age", "")
-        lp = current_period.get("luck_pillar", {})
-        period_str = f"ages {sa}–{ea}, {_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}))}"
 
     fp = bazi_data.get("four_pillars", {})
     pillars_parts = []
@@ -540,34 +681,108 @@ def get_annual_forecast_prompt(bazi_data: dict, language: str = "en") -> tuple[s
         pillars_parts.append(f"{s}{b}")
     pillars_str = " ".join(pillars_parts)
 
+    # Localize element/zodiac for the template hint text
+    l_elem = _localize_elem(stem_elem, language)
+    l_zodiac = _localize_zodiac(branch_zodiac, language)
+
     system = _get_section_system_message(language)
     if language == "zh-TW":
-        user = f"""命盤四柱：{pillars_str}。流年{year}：{pillar_naming}。與命盤互動：{int_desc or "無特殊沖合"}
-當前年齡段：{period_str}。請說明基於此年齡段，哪些季度最關鍵。
-必須：1) 提及具體月份（如三月、六月、九月）；2) 季度行動計劃（Q1：… Q2：… Q3：… Q4：…）；3) 引用流年柱及其五行（如{stem_elem} {branch_zodiac}）。150字內。用繁體中文回應。"""
+        period_str_tw = ""
+        if current_period:
+            sa = current_period.get("start_age", "")
+            ea = current_period.get("end_age", "")
+            lp = current_period.get("luck_pillar", {})
+            period_str_tw = f"年齡 {sa}–{ea} 歲，{_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}), 'zh-TW')}"
+        user = (
+            f"命盤四柱：{pillars_str}。流年{year}：{pillar_naming}。與命盤互動：{int_desc or '無特殊沖合'}\n"
+            f"當前年齡段：{period_str_tw}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號。每個 Q 只寫一行，不要加子標籤）：\n\n"
+            f"主題：（{year}年整體主題，一個短語）\n"
+            f"概述：（1–2句連結流年柱{l_elem}{l_zodiac}與命盤的互動）\n\n"
+            f"Q1：（1–3月的重點行動，一句話）\n"
+            f"Q2：（4–6月的重點行動，一句話）\n"
+            f"Q3：（7–9月的重點行動，一句話）\n"
+            f"Q4：（10–12月的重點行動，一句話）\n\n"
+            f"吉月：（最有利的具體月份）\n"
+            f"凶月：（需謹慎的具體月份）\n"
+            f"做：（今年最重要的行動建議）\n"
+            f"避免：（今年最需避免的事項）\n\n"
+            f"150字內。用繁體中文回應。不要使用數字編號（1. 2. 3.）。"
+        )
     elif language == "zh-CN":
-        user = f"""命盘四柱：{pillars_str}。流年{year}：{pillar_naming}。与命盘互动：{int_desc or "无特殊冲合"}
-当前年龄段：{period_str}。请说明基于此年龄段，哪些季度最关键。
-必须：1) 提及具体月份（如三月、六月、九月）；2) 季度行动计划（Q1：… Q2：… Q3：… Q4：…）；3) 引用流年柱及其五行（如{stem_elem} {branch_zodiac}）。150字内。用简体中文回应。"""
+        period_str_cn = ""
+        if current_period:
+            sa = current_period.get("start_age", "")
+            ea = current_period.get("end_age", "")
+            lp = current_period.get("luck_pillar", {})
+            period_str_cn = f"年龄 {sa}–{ea} 岁，{_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}), 'zh-CN')}"
+        user = (
+            f"命盘四柱：{pillars_str}。流年{year}：{pillar_naming}。与命盘互动：{int_desc or '无特殊冲合'}\n"
+            f"当前年龄段：{period_str_cn}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号。每个 Q 只写一行，不要加子标签）：\n\n"
+            f"主题：（{year}年整体主题，一个短语）\n"
+            f"概述：（1–2句连结流年柱{l_elem}{l_zodiac}与命盘的互动）\n\n"
+            f"Q1：（1–3月的重点行动，一句话）\n"
+            f"Q2：（4–6月的重点行动，一句话）\n"
+            f"Q3：（7–9月的重点行动，一句话）\n"
+            f"Q4：（10–12月的重点行动，一句话）\n\n"
+            f"吉月：（最有利的具体月份）\n"
+            f"凶月：（需谨慎的具体月份）\n"
+            f"做：（今年最重要的行动建议）\n"
+            f"避免：（今年最需避免的事项）\n\n"
+            f"150字内。用简体中文回应。不要使用数字编号（1. 2. 3.）。"
+        )
     elif language == "ko":
         period_str_ko = ""
         if current_period:
             sa = current_period.get("start_age", "")
             ea = current_period.get("end_age", "")
             lp = current_period.get("luck_pillar", {})
-            period_str_ko = f"나이 {sa}–{ea}세, {_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}))}"
-        user = f"""명반 사주：{pillars_str}。유년 {year}：{pillar_naming}。명반과 상호작용：{int_desc or "특별한 충합 없음"}
-현재 연령대：{period_str_ko}。이 연령대를 기준으로 어떤 분기가 가장 중요한지 설명해 주세요.
-필수：1) 구체적 월 언급（예: 3월、6월、9월）；2) 분기별 행동 계획（Q1：… Q2：… Q3：… Q4：…）；3) 유년주와 그 오행 인용（예: {stem_elem} {branch_zodiac}）。150자 이내。한국어로 응답해 주세요。"""
+            period_str_ko = f"나이 {sa}–{ea}세, {_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}), 'ko')}"
+        user = (
+            f"명반 사주：{pillars_str}。유년 {year}：{pillar_naming}。명반과 상호작용：{int_desc or '특별한 충합 없음'}\n"
+            f"현재 연령대：{period_str_ko}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론。각 Q는 한 줄만，하위 레이블 추가 금지）：\n\n"
+            f"주제：（{year}년 전체 주제，짧은 구）\n"
+            f"개요：（1–2문장으로 유년주 {l_elem} {l_zodiac}와 명반의 상호작용 연결）\n\n"
+            f"Q1：（1–3월 핵심 행동，한 문장）\n"
+            f"Q2：（4–6월 핵심 행동，한 문장）\n"
+            f"Q3：（7–9월 핵심 행동，한 문장）\n"
+            f"Q4：（10–12월 핵심 행동，한 문장）\n\n"
+            f"길월：（가장 유리한 구체적 월）\n"
+            f"흉월：（신중해야 할 구체적 월）\n"
+            f"하세요：（올해 가장 중요한 행동 조언）\n"
+            f"피하세요：（올해 가장 피해야 할 사항）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。숫자 번호매기기（1. 2. 3.）사용 금지。"
+        )
     else:
-        user = f"""Chart: {pillars_str}. Annual pillar {year}: {pillar_naming}. Interactions: {int_desc or "None"}
-Current age period: {period_str}. Based on this, which quarters are most significant?
-MUST: 1) Mention specific months (e.g. March, June, September); 2) Quarterly action plans (Q1: ... Q2: ... Q3: ... Q4: ...); 3) Reference year pillar and its element (e.g. {stem_elem} {branch_zodiac}). 150 words max. Respond in English."""
+        period_str_en = ""
+        if current_period:
+            sa = current_period.get("start_age", "")
+            ea = current_period.get("end_age", "")
+            lp = current_period.get("luck_pillar", {})
+            period_str_en = f"ages {sa}–{ea}, {_get_pillar_naming(lp.get('stem', {}), lp.get('branch', {}), 'en')}"
+        user = (
+            f"Chart: {pillars_str}. Annual pillar {year}: {pillar_naming}. Interactions: {int_desc or 'None'}\n"
+            f"Current age period: {period_str_en}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Theme: (overall {year} year theme, one short phrase)\n"
+            f"Overview: (1-2 sentences connecting annual pillar {stem_elem} {branch_zodiac} to the natal chart)\n\n"
+            f"Q1 (Jan-Mar): (key focus and action)\n"
+            f"Q2 (Apr-Jun): (key focus and action)\n"
+            f"Q3 (Jul-Sep): (key focus and action)\n"
+            f"Q4 (Oct-Dec): (key focus and action)\n\n"
+            f"Lucky Months: (most favorable specific months)\n"
+            f"Caution Months: (months requiring extra care)\n"
+            f"Do: (most important action for the year)\n"
+            f"Avoid: (most important thing to avoid this year)\n\n"
+            f"150 words max. Respond in English."
+        )
     return (system, user)
 
 
 def get_age_period_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
-    """Current Age Period: age_periods, current_age, birth_date → analysis of user's current 10-year luck."""
+    """Current Age Period: age_periods, current_age, birth_date → strict template."""
     from datetime import datetime
 
     birth_date_str = bazi_data.get("input", {}).get("birth_date", "")
@@ -594,7 +809,7 @@ def get_age_period_prompt(bazi_data: dict, language: str = "en") -> tuple[str, s
     branch_d = pillar.get("branch", {})
     stem = stem_d.get("name_cn", "")
     branch = branch_d.get("name_cn", "")
-    pillar_naming = _get_pillar_naming(stem_d, branch_d)
+    pillar_naming = _get_pillar_naming(stem_d, branch_d, language)
     summary = current_period.get("summary", "")
     focus = current_period.get("focus_areas", []) or []
     focus_str = ", ".join(focus[:3])
@@ -604,21 +819,61 @@ def get_age_period_prompt(bazi_data: dict, language: str = "en") -> tuple[str, s
 
     system = _get_section_system_message(language)
     if language == "zh-TW":
-        user = f"""當前年齡：{current_age}歲。當前十年大運：{start_age}–{end_age}歲，{pillar_naming or stem+branch}，整體：{quality}。重點：{focus_str}。概要：{summary}
-五行平衡：{balance}。請說明基於五行平衡，此十年帶來什麼機會與挑戰。
-必須：1) 引用具體十年柱（如丙午火馬）；2) 連結此年齡與人生階段；3) 年齡專屬可執行建議。150字內。用繁體中文回應。"""
+        user = (
+            f"當前年齡：{current_age}歲。當前十年大運：{start_age}–{end_age}歲，{pillar_naming or stem+branch}，整體：{quality}。\n"
+            f"重點：{focus_str}。概要：{summary}。五行平衡：{balance}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號）：\n\n"
+            f"主題：（此十年核心人生主題，一個短語）\n"
+            f"概述：（此十年柱如何影響命主，連結五行平衡，1–2句）\n\n"
+            f"機遇：\n- （此十年可把握的機遇1）\n- （此十年可把握的機遇2）\n\n"
+            f"挑戰：\n- （此十年需謹慎的挑戰1）\n- （此十年需謹慎的挑戰2）\n\n"
+            f"做：（此年齡段應採取的具體行動）\n"
+            f"避免：（此年齡段應避免的事項）\n"
+            f"時機：（十年中最佳的子時段，如「前期/中期/後期」）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
     elif language == "zh-CN":
-        user = f"""当前年龄：{current_age}岁。当前十年大运：{start_age}–{end_age}岁，{pillar_naming or stem+branch}，整体：{quality}。重点：{focus_str}。概要：{summary}
-五行平衡：{balance}。请说明基于五行平衡，此十年带来什么机会与挑战。
-必须：1) 引用具体十年柱（如丙午火马）；2) 连结此年龄与人生阶段；3) 年龄专属可执行建议。150字内。用简体中文回应。"""
+        user = (
+            f"当前年龄：{current_age}岁。当前十年大运：{start_age}–{end_age}岁，{pillar_naming or stem+branch}，整体：{quality}。\n"
+            f"重点：{focus_str}。概要：{summary}。五行平衡：{balance}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号）：\n\n"
+            f"主题：（此十年核心人生主题，一个短语）\n"
+            f"概述：（此十年柱如何影响命主，连结五行平衡，1–2句）\n\n"
+            f"机遇：\n- （此十年可把握的机遇1）\n- （此十年可把握的机遇2）\n\n"
+            f"挑战：\n- （此十年需谨慎的挑战1）\n- （此十年需谨慎的挑战2）\n\n"
+            f"做：（此年龄段应采取的具体行动）\n"
+            f"避免：（此年龄段应避免的事项）\n"
+            f"时机：（十年中最佳的子时段，如「前期/中期/后期」）\n\n"
+            f"150字内。用简体中文回应。"
+        )
     elif language == "ko":
-        user = f"""현재 나이：{current_age}세。현재 10년 대운：{start_age}–{end_age}세，{pillar_naming or stem+branch}，전체：{quality}。핵심：{focus_str}。요약：{summary}
-오행 균형：{balance}。오행 균형을 바탕으로 이 10년이 어떤 기회와 도전을 가져오는지 설명해 주세요.
-필수：1) 구체적 10년주 인용（예: 丙午 화마）；2) 이 나이와 인생 단계 연결；3) 나이에 맞는 실행 가능한 조언。150자 이내。한국어로 응답해 주세요。"""
+        user = (
+            f"현재 나이：{current_age}세。현재 10년 대운：{start_age}–{end_age}세，{pillar_naming or stem+branch}，전체：{quality}。\n"
+            f"핵심：{focus_str}。요약：{summary}。오행 균형：{balance}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론）：\n\n"
+            f"주제：（이 10년의 핵심 인생 주제，짧은 구）\n"
+            f"개요：（이 10년주가 명주에 어떤 영향을 미치는지，오행 균형과 연결，1–2문장）\n\n"
+            f"기회：\n- （이 10년 동안 활용할 수 있는 기회1）\n- （이 10년 동안 활용할 수 있는 기회2）\n\n"
+            f"도전：\n- （이 10년 동안 신중해야 할 도전1）\n- （이 10년 동안 신중해야 할 도전2）\n\n"
+            f"하세요：（이 연령대에 취해야 할 구체적 행동）\n"
+            f"피하세요：（이 연령대에 피해야 할 사항）\n"
+            f"시기：（10년 중 최적 시기，예: 초기/중기/후기）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
     else:
-        user = f"""Current age: {current_age}. Current 10-year luck: ages {start_age}–{end_age}, {pillar_naming or stem+branch}, overall: {quality}. Focus: {focus_str}. Summary: {summary}
-Five Elements balance: {balance}. Given this balance, what opportunities/challenges does this period present?
-MUST: 1) Reference specific decade pillar (e.g. 丙午 fire horse); 2) Connect period themes to current age and life stage; 3) Age-specific actionable guidance. 150 words max. Respond in English."""
+        user = (
+            f"Current age: {current_age}. Current 10-year luck: ages {start_age}–{end_age}, {pillar_naming or stem+branch}, overall: {quality}.\n"
+            f"Focus: {focus_str}. Summary: {summary}. Five Elements balance: {balance}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Theme: (core life theme of this decade, one short phrase)\n"
+            f"Overview: (how this decade pillar affects the person, connecting to element balance, 1-2 sentences)\n\n"
+            f"Opportunities:\n- (opportunity to embrace 1)\n- (opportunity to embrace 2)\n\n"
+            f"Challenges:\n- (challenge to navigate 1)\n- (challenge to navigate 2)\n\n"
+            f"Do: (specific action for this age range)\n"
+            f"Avoid: (what to avoid during this age range)\n"
+            f"Timing: (best sub-period within this decade, e.g. 'early/mid/late years')\n\n"
+            f"150 words max. Respond in English."
+        )
     return (system, user)
 
 
@@ -657,7 +912,7 @@ def get_age_periods_timeline_prompt(bazi_data: dict, language: str = "en") -> tu
         branch_d = pillar.get("branch", {})
         stem = stem_d.get("name_cn", "")
         branch = branch_d.get("name_cn", "")
-        pillar_naming = _get_pillar_naming(stem_d, branch_d)
+        pillar_naming = _get_pillar_naming(stem_d, branch_d, language)
         quality = p.get("quality", "")
         main_elem = p.get("main_element", "")
         rel = p.get("relationship_to_day_master", "")
@@ -673,10 +928,31 @@ def get_age_periods_timeline_prompt(bazi_data: dict, language: str = "en") -> tu
         )
     periods_str = "\n".join(periods_text_parts)
 
-    system = _get_section_system_message(language)
-    system += " Use the exact format below. First JOURNEY OVERVIEW (~150 words), then 8 periods (~100–120 words each). Total ~900 words max."
-    system += " Respond ONLY in the requested language. Never mix languages."
-    system += " Use **bold** for section labels (Theme, Key Focus, Opportunities, Challenges, Timing). Use * or - for bullet points in lists. Use newlines between sections."
+    # NOTE: This prompt needs ~900 words total, so we do NOT use _get_section_system_message
+    # which has a hard "Maximum 150 words" constraint that confuses the AI.
+    lang_map = {"zh-TW": "繁體中文", "zh-CN": "简体中文", "ko": "한국어"}
+    lang_name = lang_map.get(language, "English")
+    system = f"You are a BAZI expert. Respond in {lang_name}."
+    system += " Total ~900 words max. First JOURNEY OVERVIEW (~150 words), then 8 periods (~100–120 words each)."
+    if language in ("zh-TW", "zh-CN"):
+        system += f" Respond ONLY in {lang_name}. Do not include any English words."
+    elif language == "ko":
+        system += " Respond ONLY in Korean. Chinese characters (Hanja) for BAZI terms are acceptable. Do not include English words."
+    else:
+        system += " Respond ONLY in English. Chinese characters for BAZI-specific terms are acceptable for authenticity."
+    system += (
+        " CRITICAL: Follow the EXACT output template in the user message."
+        " The JOURNEY OVERVIEW must come FIRST and contain ONLY the overview (analogy, turning points, elemental journey)."
+        " Then write EXACTLY 8 separate ### blocks, one per age period. Each ### block must contain ONLY that age range's content."
+        " Use **bold** for section labels (Theme, Key Focus, Opportunities, Challenges, Timing)."
+        " Use * or - for bullet points under Key Focus. Use newlines between sections."
+        " Do NOT use numbered lists (1. 2. 3.) inside the ### period blocks."
+        " Use concrete examples relevant to the user's chart data."
+    )
+    if language in ("zh-TW", "zh-CN"):
+        system += " IMPORTANT: All label names must be in Chinese as specified in the template. Do NOT use English labels."
+    elif language == "ko":
+        system += " IMPORTANT: All label names must be in Korean as specified in the template. Do NOT use English labels."
 
     if language == "zh-CN":
         user = f"""日主：{day_master}。四柱：{pillars_str}。五行平衡：{balance}。
@@ -778,4 +1054,289 @@ Important: Each ### Age X–Y block must contain ONLY that age range's content. 
 **Timing:** Best sub-periods (early/mid/late years)
 
 Respond in English. ~100–120 words per period, ~900 words total max."""
+    return (system, user)
+
+
+def get_use_god_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
+    """Use God / Avoid God: strict template."""
+    ug_data = bazi_data.get("use_god", {})
+    dm_strength = ug_data.get("dm_strength", "balanced")
+    use_god = ug_data.get("use_god", "")
+    use_god_2 = ug_data.get("use_god_secondary", "")
+    avoid_god = ug_data.get("avoid_god", "")
+    avoid_god_2 = ug_data.get("avoid_god_secondary", "")
+    dm_element = bazi_data.get("day_master", {}).get("element", "")
+    advice = ug_data.get("advice", {})
+    colors = advice.get("colors", {})
+    directions = advice.get("directions", {})
+    seasons = advice.get("seasons", {})
+    careers = advice.get("careers", {})
+    numbers = advice.get("numbers", "")
+
+    elements_in_pillars = _get_elements_in_pillars(bazi_data)
+    ss = bazi_data.get("seasonal_strength", {}).get("strength", "")
+
+    system = _get_section_system_message(language)
+
+    if language == "zh-TW":
+        user = (
+            f"日主：{dm_element}，日主強弱：{dm_strength}。得令：{ss}。\n"
+            f"四柱五行分布：{elements_in_pillars}。\n"
+            f"用神：{use_god}。輔助用神：{use_god_2}。忌神：{avoid_god}。輔助忌神：{avoid_god_2}。\n"
+            f"推薦顏色：{colors.get('zh-TW', '')}。方位：{directions.get('zh-TW', '')}。季節：{seasons.get('zh-TW', '')}。\n"
+            f"適合行業：{careers.get('zh-TW', '')}。幸運數字：{numbers}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號。不要使用數字編號 1. 2. 3.）：\n\n"
+            f"原因：（為何此用神能幫助命盤平衡，結合日主強弱說明，1–2句）\n\n"
+            f"日常行動：\n- （顏色/穿著行動）\n- （方位/工作空間行動）\n- （習慣/活動行動）\n\n"
+            f"事業：（1–2個職業方向建議）\n\n"
+            f"避免：\n- （忌神相關具體避免事項1）\n- （忌神相關具體避免事項2）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
+    elif language == "zh-CN":
+        user = (
+            f"日主：{dm_element}，日主强弱：{dm_strength}。得令：{ss}。\n"
+            f"四柱五行分布：{elements_in_pillars}。\n"
+            f"用神：{use_god}。辅助用神：{use_god_2}。忌神：{avoid_god}。辅助忌神：{avoid_god_2}。\n"
+            f"推荐颜色：{colors.get('zh-CN', '')}。方位：{directions.get('zh-CN', '')}。季节：{seasons.get('zh-CN', '')}。\n"
+            f"适合行业：{careers.get('zh-CN', '')}。幸运数字：{numbers}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号。不要使用数字编号 1. 2. 3.）：\n\n"
+            f"原因：（为何此用神能帮助命盘平衡，结合日主强弱说明，1–2句）\n\n"
+            f"日常行动：\n- （颜色/穿着行动）\n- （方位/工作空间行动）\n- （习惯/活动行动）\n\n"
+            f"事业：（1–2个职业方向建议）\n\n"
+            f"避免：\n- （忌神相关具体避免事项1）\n- （忌神相关具体避免事项2）\n\n"
+            f"150字内。用简体中文回应。"
+        )
+    elif language == "ko":
+        user = (
+            f"일주：{dm_element}，일주 강약：{dm_strength}。득령：{ss}。\n"
+            f"사주 오행 분포：{elements_in_pillars}。\n"
+            f"용신：{use_god}。보조 용신：{use_god_2}。기신：{avoid_god}。보조 기신：{avoid_god_2}。\n"
+            f"추천 색상：{colors.get('ko', '')}。방위：{directions.get('ko', '')}。계절：{seasons.get('ko', '')}。\n"
+            f"적합 업종：{careers.get('ko', '')}。행운의 숫자：{numbers}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론。숫자 번호매기기 1. 2. 3. 사용 금지）：\n\n"
+            f"이유：（이 용신이 명반 균형에 어떻게 도움이 되는지，일주 강약과 연결하여 설명，1–2문장）\n\n"
+            f"일상 행동：\n- （색상/의류 행동）\n- （방위/업무 공간 행동）\n- （습관/활동 행동）\n\n"
+            f"직업：（1–2가지 직업 방향 제안）\n\n"
+            f"피하세요：\n- （기신 관련 구체적 회피 사항1）\n- （기신 관련 구체적 회피 사항2）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
+    else:
+        user = (
+            f"Day Master: {dm_element}, DM Strength: {dm_strength}. Seasonal: {ss}.\n"
+            f"Elements in pillars: {elements_in_pillars}.\n"
+            f"Use God: {use_god}. Secondary: {use_god_2}. Avoid God: {avoid_god}. Secondary: {avoid_god_2}.\n"
+            f"Recommended colors: {colors.get('en', '')}. Direction: {directions.get('en', '')}. Season: {seasons.get('en', '')}.\n"
+            f"Suitable careers: {careers.get('en', '')}. Lucky numbers: {numbers}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Why: (why this Use God helps balance the chart, connected to DM strength, 1-2 sentences)\n\n"
+            f"Daily Actions:\n- (color/clothing action)\n- (direction/workspace action)\n- (habit/activity action)\n\n"
+            f"Career: (1-2 career direction suggestions)\n\n"
+            f"Avoid:\n- (specific Avoid God-related avoidance 1)\n- (specific Avoid God-related avoidance 2)\n\n"
+            f"150 words max. Respond in English."
+        )
+
+    return (system, user)
+
+
+def get_pillar_interactions_prompt(bazi_data: dict, language: str = "en") -> tuple[str, str]:
+    """Pillar Interactions: strict template."""
+    pi = bazi_data.get("pillar_interactions", {})
+    interactions = pi.get("interactions", [])
+    summary = pi.get("summary", {})
+    dm_element = bazi_data.get("day_master", {}).get("element", "")
+
+    fp = bazi_data.get("four_pillars", {})
+    pillars_parts = []
+    for pn in ["year", "month", "day", "hour"]:
+        p = fp.get(pn, {})
+        s = p.get("stem", {}).get("name_cn", "")
+        b = p.get("branch", {}).get("name_cn", "")
+        pillars_parts.append(f"{pn}: {s}{b}")
+    pillars_str = ", ".join(pillars_parts)
+
+    ix_text = "\n".join([
+        f"- {ix.get('type_label', '')} ({ix.get('detail_cn', '')}): {ix.get('description', '')}"
+        for ix in interactions
+    ]) if interactions else "None"
+
+    system = _get_section_system_message(language)
+
+    if language == "zh-TW":
+        user = (
+            f"日主：{dm_element}。四柱：{pillars_str}。\n"
+            f"命局合沖刑害（共{summary.get('total', 0)}項，吉{summary.get('positive', 0)}凶{summary.get('negative', 0)}）：\n{ix_text}\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號）：\n\n"
+            f"概述：（這些合沖刑害如何整體影響命主的人生格局，結合日主五行，1–2句）\n"
+            f"關鍵影響：（哪個互動影響最大，為什麼，1–2句）\n\n"
+            f"做：\n- （善用吉象的具體行動1）\n- （善用吉象的具體行動2）\n\n"
+            f"避免：\n- （化解凶象的具體建議1）\n- （化解凶象的具體建議2）\n\n"
+            f"150字內。用繁體中文回應。"
+        )
+    elif language == "zh-CN":
+        user = (
+            f"日主：{dm_element}。四柱：{pillars_str}。\n"
+            f"命局合冲刑害（共{summary.get('total', 0)}项，吉{summary.get('positive', 0)}凶{summary.get('negative', 0)}）：\n{ix_text}\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号）：\n\n"
+            f"概述：（这些合冲刑害如何整体影响命主的人生格局，结合日主五行，1–2句）\n"
+            f"关键影响：（哪个互动影响最大，为什么，1–2句）\n\n"
+            f"做：\n- （善用吉象的具体行动1）\n- （善用吉象的具体行动2）\n\n"
+            f"避免：\n- （化解凶象的具体建议1）\n- （化解凶象的具体建议2）\n\n"
+            f"150字内。用简体中文回应。"
+        )
+    elif language == "ko":
+        user = (
+            f"일주：{dm_element}。사주：{pillars_str}。\n"
+            f"명국 합충형해（총 {summary.get('total', 0)}건，길 {summary.get('positive', 0)} 흉 {summary.get('negative', 0)}）：\n{ix_text}\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론）：\n\n"
+            f"개요：（이러한 합충형해가 일주 오행과 결합하여 명주의 인생에 어떻게 영향을 미치는지，1–2문장）\n"
+            f"핵심 영향：（어떤 상호작용이 가장 영향이 큰지，왜 그런지，1–2문장）\n\n"
+            f"하세요：\n- （길상을 활용하는 구체적 행동1）\n- （길상을 활용하는 구체적 행동2）\n\n"
+            f"피하세요：\n- （흉상을 화해하는 구체적 조언1）\n- （흉상을 화해하는 구체적 조언2）\n\n"
+            f"150자 이내。한국어로 응답해 주세요。"
+        )
+    else:
+        user = (
+            f"Day Master: {dm_element}. Four Pillars: {pillars_str}.\n"
+            f"Natal Pillar Interactions ({summary.get('total', 0)} total, {summary.get('positive', 0)} harmonious, {summary.get('negative', 0)} challenging):\n{ix_text}\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Overview: (how these interactions collectively shape the life pattern, connecting to Day Master element, 1-2 sentences)\n"
+            f"Key Impact: (which interaction has the greatest effect and why, 1-2 sentences)\n\n"
+            f"Do:\n- (specific action to leverage harmonious interactions 1)\n- (specific action to leverage harmonious interactions 2)\n\n"
+            f"Avoid:\n- (specific advice to mitigate challenging interactions 1)\n- (specific advice to mitigate challenging interactions 2)\n\n"
+            f"150 words max. Respond in English."
+        )
+
+    return (system, user)
+
+
+_ELEM_I18N = {
+    "Wood": {"en": "Wood", "zh-TW": "木", "zh-CN": "木", "ko": "목(木)"},
+    "Fire":  {"en": "Fire",  "zh-TW": "火", "zh-CN": "火", "ko": "화(火)"},
+    "Earth": {"en": "Earth", "zh-TW": "土", "zh-CN": "土", "ko": "토(土)"},
+    "Metal": {"en": "Metal", "zh-TW": "金", "zh-CN": "金", "ko": "금(金)"},
+    "Water": {"en": "Water", "zh-TW": "水", "zh-CN": "水", "ko": "수(水)"},
+}
+
+_YINYANG_I18N = {
+    "Yin":  {"en": "Yin",  "zh-TW": "陰", "zh-CN": "阴", "ko": "음"},
+    "Yang": {"en": "Yang", "zh-TW": "陽", "zh-CN": "阳", "ko": "양"},
+}
+
+def _localize_elem(elem: str, lang: str) -> str:
+    return _ELEM_I18N.get(elem, {}).get(lang, elem or "")
+
+def _localize_yinyang(yy: str, lang: str) -> str:
+    return _YINYANG_I18N.get(yy, {}).get(lang, yy or "")
+
+
+def get_compatibility_prompt(chart_a: dict, chart_b: dict, compat: dict, language: str = "en") -> tuple[str, str]:
+    """Generate AI prompt for compatibility analysis between two BAZI charts."""
+    dm_a = chart_a.get("day_master", {})
+    dm_b = chart_b.get("day_master", {})
+    ug_a = chart_a.get("use_god", {})
+    ug_b = chart_b.get("use_god", {})
+
+    # Pillar summaries
+    def _pillars_str(chart):
+        fp = chart.get("four_pillars", {})
+        parts = []
+        for pn in ["year", "month", "day", "hour"]:
+            p = fp.get(pn, {})
+            s = p.get("stem", {}).get("name_cn", "")
+            b = p.get("branch", {}).get("name_cn", "")
+            parts.append(f"{s}{b}")
+        return " ".join(parts)
+
+    pillars_a = _pillars_str(chart_a)
+    pillars_b = _pillars_str(chart_b)
+    score = compat.get("total_score", 0)
+    tier = compat.get("tier_label", "")
+    dims = compat.get("dimensions", [])
+
+    dim_summary = "; ".join([
+        f"{d.get('key', '')}: {d.get('score', 0)}/{d.get('max_score', 0)} ({d.get('relationship_label', '')})"
+        for d in dims
+    ])
+
+    lang_map = {"zh-TW": "繁體中文", "zh-CN": "简体中文", "ko": "한국어"}
+    lang_name = lang_map.get(language, "English")
+
+    if language in ("zh-TW", "zh-CN"):
+        lang_rule = f"Respond ONLY in {lang_name}. Do not include English words."
+    elif language == "ko":
+        lang_rule = f"Respond ONLY in {lang_name}. Chinese characters (Hanja) for BAZI terms are acceptable. Do not include English words."
+    else:
+        lang_rule = f"Respond ONLY in {lang_name}. Chinese characters for BAZI terms are acceptable for authenticity."
+
+    system = (
+        f"You are a BAZI compatibility expert. Respond in {lang_name}. "
+        f"{lang_rule} "
+        f"Be warm, balanced, and constructive — even for low-scoring matches, highlight growth opportunities. "
+        f"CRITICAL: Follow the EXACT output template in the user message. "
+        f"Use the EXACT label names provided. Each label on its own line followed by a colon. "
+        f"Bullet points use '- ' prefix. Do NOT use numbered lists (1. 2. 3.). "
+        f"Do NOT use markdown **bold**. 250 words max."
+    )
+
+    if language == "zh-TW":
+        user = (
+            f"甲方四柱：{pillars_a}。日主：{_localize_elem(dm_a.get('element', ''), 'zh-TW')}（{_localize_yinyang(dm_a.get('yin_yang', ''), 'zh-TW')}）。用神：{_localize_elem(ug_a.get('use_god', ''), 'zh-TW')}。\n"
+            f"乙方四柱：{pillars_b}。日主：{_localize_elem(dm_b.get('element', ''), 'zh-TW')}（{_localize_yinyang(dm_b.get('yin_yang', ''), 'zh-TW')}）。用神：{_localize_elem(ug_b.get('use_god', ''), 'zh-TW')}。\n"
+            f"合婚總分：{score}/100（{tier}）。\n"
+            f"各維度：{dim_summary}。\n\n"
+            f"用以下格式回應（每行一個標籤，標籤後加冒號。不要使用數字編號）：\n\n"
+            f"比喻：（你們的關係像[歷史名人伴侶]，因為…——一句話類比）\n\n"
+            f"互動：（兩人日主五行互動的解讀，相生相剋如何體現在日常相處中，2–3句）\n\n"
+            f"生肖：（生肖與夫妻宮的合沖分析及其對感情的影響，2–3句）\n\n"
+            f"互補：（兩人用神是否互補，如何利用這一點增進關係，1–2句）\n\n"
+            f"做：\n- （溝通方式建議）\n- （約會活動建議）\n- （共同目標建議）\n\n"
+            f"避免：\n- （潛在衝突點1及化解方法）\n- （潛在衝突點2及化解方法）\n\n"
+            f"250字內。用繁體中文回應。所有標籤名必須用中文。"
+        )
+    elif language == "zh-CN":
+        user = (
+            f"甲方四柱：{pillars_a}。日主：{_localize_elem(dm_a.get('element', ''), 'zh-CN')}（{_localize_yinyang(dm_a.get('yin_yang', ''), 'zh-CN')}）。用神：{_localize_elem(ug_a.get('use_god', ''), 'zh-CN')}。\n"
+            f"乙方四柱：{pillars_b}。日主：{_localize_elem(dm_b.get('element', ''), 'zh-CN')}（{_localize_yinyang(dm_b.get('yin_yang', ''), 'zh-CN')}）。用神：{_localize_elem(ug_b.get('use_god', ''), 'zh-CN')}。\n"
+            f"合婚总分：{score}/100（{tier}）。\n"
+            f"各维度：{dim_summary}。\n\n"
+            f"用以下格式回应（每行一个标签，标签后加冒号。不要使用数字编号）：\n\n"
+            f"比喻：（你们的关系像[历史名人伴侣]，因为…——一句话类比）\n\n"
+            f"互动：（两人日主五行互动的解读，相生相克如何体现在日常相处中，2–3句）\n\n"
+            f"生肖：（生肖与夫妻宫的合冲分析及其对感情的影响，2–3句）\n\n"
+            f"互补：（两人用神是否互补，如何利用这一点增进关系，1–2句）\n\n"
+            f"做：\n- （沟通方式建议）\n- （约会活动建议）\n- （共同目标建议）\n\n"
+            f"避免：\n- （潜在冲突点1及化解方法）\n- （潜在冲突点2及化解方法）\n\n"
+            f"250字内。用简体中文回应。所有标签名必须用中文。"
+        )
+    elif language == "ko":
+        user = (
+            f"갑측 사주：{pillars_a}。일주：{_localize_elem(dm_a.get('element', ''), 'ko')}（{_localize_yinyang(dm_a.get('yin_yang', ''), 'ko')}）。용신：{_localize_elem(ug_a.get('use_god', ''), 'ko')}。\n"
+            f"을측 사주：{pillars_b}。일주：{_localize_elem(dm_b.get('element', ''), 'ko')}（{_localize_yinyang(dm_b.get('yin_yang', ''), 'ko')}）。용신：{_localize_elem(ug_b.get('use_god', ''), 'ko')}。\n"
+            f"궁합 총점：{score}/100（{tier}）。\n"
+            f"각 차원：{dim_summary}。\n\n"
+            f"다음 형식으로 응답（각 행에 하나의 레이블，레이블 뒤에 콜론。숫자 번호매기기 사용 금지）：\n\n"
+            f"비유：（두 사람의 관계는 [역사적 유명 커플]과 같습니다，왜냐하면…——한 문장 비유）\n\n"
+            f"상호작용：（두 사람 일주 오행 상호작용 해석，상생상극이 일상에 어떻게 나타나는지，2–3문장）\n\n"
+            f"띠：（띠와 부부궁의 합충 분석 및 감정에 미치는 영향，2–3문장）\n\n"
+            f"상호보완：（두 사람의 용신이 상호보완적인지，이를 어떻게 활용할지，1–2문장）\n\n"
+            f"하세요：\n- （소통 방식 조언）\n- （데이트 활동 조언）\n- （공동 목표 조언）\n\n"
+            f"피하세요：\n- （잠재적 갈등점1 및 해소 방법）\n- （잠재적 갈등점2 및 해소 방법）\n\n"
+            f"250자 이내。한국어로 응답해 주세요。모든 레이블은 한국어 사용。"
+        )
+    else:
+        user = (
+            f"Person A chart: {pillars_a}. Day Master: {dm_a.get('element', '')} ({dm_a.get('yin_yang', '')}). Use God: {ug_a.get('use_god', '')}.\n"
+            f"Person B chart: {pillars_b}. Day Master: {dm_b.get('element', '')} ({dm_b.get('yin_yang', '')}). Use God: {ug_b.get('use_god', '')}.\n"
+            f"Compatibility score: {score}/100 ({tier}).\n"
+            f"Dimensions: {dim_summary}.\n\n"
+            f"Respond using EXACTLY this template (one label per line, colon after label):\n\n"
+            f"Analogy: (Your relationship resembles [famous historical couple] because... — one-sentence analogy)\n\n"
+            f"Interaction: (how both Day Master elements interact in daily life together, 2-3 sentences)\n\n"
+            f"Zodiac: (zodiac and Spouse Palace harmony/clash analysis, emotional impact, 2-3 sentences)\n\n"
+            f"Complementarity: (whether both Use Gods complement each other, how to leverage, 1-2 sentences)\n\n"
+            f"Do:\n- (communication advice)\n- (date activity suggestion)\n- (shared goal suggestion)\n\n"
+            f"Avoid:\n- (friction point 1 and resolution)\n- (friction point 2 and resolution)\n\n"
+            f"250 words max. Respond in English."
+        )
+
     return (system, user)

@@ -93,6 +93,7 @@
 .section-icon {
   font-size: 20px;
   display: inline-block;
+  color: #d4af37;
 }
 
 /* H3: amber-200, semibold */
@@ -120,29 +121,164 @@
 
 .content-line {
   margin: 0;
-  line-height: 1.7;
+  line-height: 1.75;
 }
 
-.content-line strong {
+.content-line strong,
+.formatted-content strong {
   color: #fde68a; /* amber-200 */
   font-weight: 600;
 }
 
-.bullet-point {
-  margin-left: 14px;
-  line-height: 1.6;
-  color: #fef3c7; /* primary body */
+.formatted-content strong.kw-label {
+  color: #d4af37; /* bazi-gold, slightly brighter for keyword labels */
+}
+
+/* Sub-headers inside formatted content */
+.fc-subheader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fde68a;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  margin-top: 12px;
+  margin-bottom: 2px;
+}
+
+.fc-accent-bar {
+  display: inline-block;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: rgba(212, 175, 55, 0.7);
+  flex-shrink: 0;
+}
+
+/* Bullet points */
+.fc-bullet {
+  display: flex;
+  gap: 8px;
+  padding-left: 12px;
+  line-height: 1.65;
+  color: #fef3c7;
   font-size: 13px;
 }
 
-.bullet-point:before {
-  content: '';
+.fc-bullet-dot {
+  color: rgba(212, 175, 55, 0.7);
+  font-size: 7px;
+  line-height: 1;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* Numbered list */
+.fc-numbered {
+  display: flex;
+  gap: 10px;
+  padding-left: 2px;
+  line-height: 1.65;
+  color: #fef3c7;
+  font-size: 13px;
+}
+
+.fc-num-circle {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: #d4af37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Keyword: value lines */
+.fc-keyword-line {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  line-height: 1.65;
+  font-size: 13px;
+  margin-top: 3px;
+}
+
+.fc-keyword {
+  font-weight: 600;
+  color: #fde68a; /* amber-200 */
+  flex-shrink: 0;
+}
+
+.fc-keyword.fc-kw-avoid {
+  color: #fda4af; /* rose-300 */
+}
+
+.fc-keyword.fc-kw-do {
+  color: #86efac; /* emerald-300 */
+}
+
+/* Label header (label with no value — section header for bullet groups) */
+.fc-label-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
+.fc-lh-bar {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: rgba(212, 175, 55, 0.6);
+  flex-shrink: 0;
+}
+
+.fc-lh-bar.fc-lh-bar-pos {
+  background: rgba(134, 239, 172, 0.6); /* emerald-300 */
+}
+
+.fc-lh-bar.fc-lh-bar-neg {
+  background: rgba(253, 164, 175, 0.6); /* rose-300 */
+}
+
+.fc-lh-text {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: #fde68a; /* amber-200 */
+}
+
+.fc-lh-pos .fc-lh-text {
+  color: #86efac; /* emerald-300 */
+}
+
+.fc-lh-neg .fc-lh-text {
+  color: #fda4af; /* rose-300 */
+}
+
+/* Legacy bullet-point class kept for backward compatibility */
+.bullet-point {
+  display: flex;
+  gap: 8px;
+  padding-left: 4px;
+  line-height: 1.65;
+  color: #fef3c7;
+  font-size: 13px;
 }
 
 .section-divider {
   height: 1px;
   margin: 8px 0;
-  background: linear-gradient(to right, transparent, rgba(156, 163, 175, 0.6), transparent);
+  background: linear-gradient(to right, transparent, rgba(212, 175, 55, 0.2), transparent);
 }
 
 /* Responsive design */

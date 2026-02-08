@@ -23,15 +23,37 @@ class Settings(BaseSettings):
     max_tokens: int = Field(default=8192, alias="MAX_TOKENS")
     api_timeout: int = Field(default=180, alias="API_TIMEOUT")
     
+    # AI Provider (deepseek | azure)
+    ai_provider: str = Field(default="deepseek", alias="AI_PROVIDER")
+
     # DeepSeek API Configuration
     deepseek_api_key: str = Field(default="", alias="DEEPSEEK_API_KEY")
     deepseek_base_url: str = "https://api.deepseek.com/v1"
     deepseek_model: str = "deepseek-chat"
     deepseek_temperature: float = 0.7
+
+    # Azure OpenAI Configuration
+    azure_api_key: str = Field(default="", alias="AZURE_OPENAI_API_KEY")
+    azure_endpoint: str = Field(default="", alias="AZURE_OPENAI_ENDPOINT")
+    azure_api_version: str = Field(default="2024-02-01", alias="AZURE_OPENAI_API_VERSION")
+    azure_deployment: str = Field(default="", alias="AZURE_OPENAI_DEPLOYMENT")
     
+    # Auth & Subscription
+    jwt_secret: str = Field(default="bazi-dev-secret-change-in-production", alias="JWT_SECRET")
+    auth_provider: str = Field(default="mock", alias="AUTH_PROVIDER")  # "mock" | "supabase"
+
+    # Stripe
+    stripe_secret_key: str = Field(default="", alias="STRIPE_SECRET_KEY")
+    stripe_webhook_secret: str = Field(default="", alias="STRIPE_WEBHOOK_SECRET")
+    stripe_price_id: str = Field(default="", alias="STRIPE_PRICE_ID")
+
     # Legacy OpenAI config (for backwards compatibility, maps to DeepSeek)
     openai_model: str = Field(default="gpt-4-turbo-preview", alias="OPENAI_MODEL")
     openai_temperature: float = Field(default=0.7, alias="OPENAI_TEMPERATURE")
+
+    # Supabase
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_service_key: str = Field(default="", alias="SUPABASE_SERVICE_KEY")
     
     model_config = ConfigDict(
         env_file=".env",

@@ -5,8 +5,9 @@ Core logic for converting birth date/time to BAZI chart
 This is the heart of the application
 """
 
-from datetime import datetime
-from typing import Dict, List, Tuple
+from datetime import datetime, date as date_type
+from typing import Dict, List, Tuple, Optional
+from lunardate import LunarDate
 from .stems_branches import (
     HeavenlyStem,
     EarthlyBranch,
@@ -25,6 +26,8 @@ from .ten_gods import annotate_four_pillars_with_ten_gods, get_strongest_ten_god
 from .annual_luck import calculate_annual_luck
 from .seasonal_strength import get_seasonal_strength
 from .deities import get_deities_for_chart
+from .use_god import determine_use_god
+from .pillar_interactions import analyze_pillar_interactions
 from .hidden_stems import BRANCH_NAME_TO_ENUM
 
 
@@ -616,24 +619,64 @@ def calculate_age_periods(
     return periods
 
 
-def calculate_bazi(birth_date_str: str, birth_hour: int, gender: str, language: str = "en") -> Dict:
+def convert_lunar_to_solar(year: int, month: int, day: int, is_leap_month: bool = False) -> date_type:
+    """
+    Convert a Chinese lunar calendar date to a Gregorian solar date.
+
+    Args:
+        year: Lunar year (1900-2050)
+        month: Lunar month (1-12)
+        day: Lunar day (1-30)
+        is_leap_month: Whether this is a leap month in the lunar calendar
+
+    Returns:
+        datetime.date in the Gregorian calendar
+
+    Raises:
+        ValueError: If the lunar date is invalid or out of range
+    """
+    try:
+        lunar = LunarDate(year, month, day, isLeapMonth=is_leap_month)
+        return lunar.toSolarDate()
+    except Exception as e:
+        raise ValueError(f"Invalid lunar date {year}-{month:02d}-{day:02d} (leap={is_leap_month}): {e}")
+
+
+def calculate_bazi(birth_date_str: str, birth_hour: int, gender: str, language: str = "en", calendar_type: str = "solar", is_leap_month: bool = False) -> Dict:
     """
     Calculate complete BAZI chart for a person
-    
+
     Args:
         birth_date_str: Birth date as "YYYY-MM-DD"
         birth_hour: Birth hour (0-23)
         gender: "male" or "female"
-        
+        language: Display language
+        calendar_type: "solar" (Gregorian) or "lunar" (Chinese lunar calendar)
+        is_leap_month: Whether the lunar month is a leap month (ignored for solar)
+
     Returns:
         Complete BAZI chart dictionary
-        
+
     Example:
         calculate_bazi("1990-05-15", 14, "male")
+        calculate_bazi("1990-04-15", 14, "male", calendar_type="lunar")
     """
     try:
-        # Parse input
-        birth_date = datetime.strptime(birth_date_str, "%Y-%m-%d")
+        # Parse input date
+        parsed = datetime.strptime(birth_date_str, "%Y-%m-%d")
+        lunar_date_str = None
+        solar_date_str = None
+
+        if calendar_type == "lunar":
+            # Convert lunar -> solar
+            lunar_date_str = birth_date_str
+            solar = convert_lunar_to_solar(parsed.year, parsed.month, parsed.day, is_leap_month)
+            solar_date_str = solar.strftime("%Y-%m-%d")
+            birth_date = datetime(solar.year, solar.month, solar.day)
+        else:
+            solar_date_str = birth_date_str
+            birth_date = parsed
+
         year = birth_date.year
         month = birth_date.month
         day = birth_date.day
@@ -702,6 +745,17 @@ def calculate_bazi(birth_date_str: str, birth_hour: int, gender: str, language: 
         # Deity interpretations (神煞)
         deities = get_deities_for_chart(four_pillars, day_master_dict)
 
+        # Use God / Avoid God (用神 / 忌神)
+        use_god = determine_use_god(
+            day_master_element=day_master_element,
+            element_counts=element_counts,
+            seasonal_strength_str=seasonal_strength.get("strength", "neutral"),
+            four_pillars=four_pillars,
+        )
+
+        # Pillar Interactions (合沖刑害)
+        pillar_interactions = analyze_pillar_interactions(four_pillars, language=language)
+
         # Calculate age-based luck periods (10-year cycles)
         age_periods = calculate_age_periods(
             birth_date=birth_date,
@@ -715,10 +769,14 @@ def calculate_bazi(birth_date_str: str, birth_hour: int, gender: str, language: 
         return {
             "success": True,
             "input": {
-                "birth_date": birth_date_str,
+                "birth_date": solar_date_str,
                 "birth_hour": birth_hour,
                 "gender": gender,
                 "birth_hour_name": f"{birth_hour}:00",
+                "calendar_type": calendar_type,
+                "solar_date": solar_date_str,
+                "lunar_date": lunar_date_str,
+                "is_leap_month": is_leap_month if calendar_type == "lunar" else None,
             },
             "four_pillars": four_pillars,
             "day_master": {
@@ -736,6 +794,8 @@ def calculate_bazi(birth_date_str: str, birth_hour: int, gender: str, language: 
             "annual_luck": annual_luck,
             "seasonal_strength": seasonal_strength,
             "deities": deities,
+            "use_god": use_god,
+            "pillar_interactions": pillar_interactions,
         }
         
     except ValueError as e:

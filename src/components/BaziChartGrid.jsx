@@ -1,4 +1,5 @@
 import React from 'react'
+import { localizeElement, localizeZodiac, localizeNamePair } from '../utils/localize'
 
 const ELEMENT_COLORS = {
   Wood: '#4CAF50',
@@ -53,12 +54,12 @@ const BaziChartGrid = ({ four_pillars, language = 'en' }) => {
             key={pillarKey}
             role="gridcell"
             aria-label={`${label} pillar: ${stem.name_cn} ${branch.name_cn}`}
-            className={`rounded-xl border overflow-hidden transition-all duration-200 min-w-0 animate-fade-in hover:scale-[1.02] hover:shadow-lg ${
+            className={`rounded-xl border overflow-hidden transition-all duration-200 min-w-0 animate-flip-in hover:scale-[1.02] hover:shadow-lg ${
               isDayPillar
-                ? 'border-bazi-gold/50 bg-bazi-surface/90 ring-1 ring-bazi-gold/30'
+                ? 'border-bazi-gold/50 bg-bazi-surface/90 ring-1 ring-bazi-gold/30 animate-glow-pulse'
                 : 'border-white/5 bg-bazi-surface/80 hover:border-amber-500/20'
             }`}
-            style={{ animationDelay: `${idx * 75}ms` }}
+            style={{ animationDelay: `${idx * 200}ms` }}
           >
             {/* Pillar label */}
             <div className="px-2 py-1.5 text-center border-b border-white/5">
@@ -67,7 +68,7 @@ const BaziChartGrid = ({ four_pillars, language = 'en' }) => {
 
             {/* Stem cell (top) */}
             <div
-              title={`${stem.name_cn} (${stem.element})${stemTenGod?.name_en ? ` — ${tt.tenGod} ${stemTenGod.name_en}` : ''}`}
+              title={`${stem.name_cn} (${localizeElement(stem.element, language)})${stemTenGod?.name_en ? ` — ${tt.tenGod} ${localizeNamePair(stemTenGod.name_en, stemTenGod.name_cn, language)}` : ''}`}
               className={`flex flex-col items-center justify-center p-3 sm:p-4 ${isDayPillar ? 'py-3 sm:py-5' : ''} border-b border-white/5`}
             >
               <span
@@ -85,18 +86,18 @@ const BaziChartGrid = ({ four_pillars, language = 'en' }) => {
                   border: `1px solid ${stemColor}60`,
                 }}
               >
-                {stem.element}
+                {localizeElement(stem.element, language)}
               </span>
               {stemTenGod?.name_en && (
                 <p className="text-[9px] sm:text-[10px] text-neutral-400 mt-0.5">
-                  {stemTenGod.name_en}
+                  {localizeNamePair(stemTenGod.name_en, stemTenGod.name_cn, language)}
                 </p>
               )}
             </div>
 
             {/* Branch cell (bottom) */}
             <div
-              title={`${branch.name_cn} (${branch.element})${branch.zodiac ? ` — ${branch.zodiac}` : ''}${branchTenGod?.name_en ? ` — ${tt.tenGod} ${branchTenGod.name_en}` : ''}${branch.hidden_stems?.length ? ` — ${tt.hidden} ${branch.hidden_stems.map(s => s.name_cn).join('')}` : ''}`}
+              title={`${branch.name_cn} (${localizeElement(branch.element, language)})${branch.zodiac ? ` — ${localizeZodiac(branch.zodiac, language)}` : ''}${branchTenGod?.name_en ? ` — ${tt.tenGod} ${localizeNamePair(branchTenGod.name_en, branchTenGod.name_cn, language)}` : ''}${branch.hidden_stems?.length ? ` — ${tt.hidden} ${branch.hidden_stems.map(s => s.name_cn).join('')}` : ''}`}
               className="flex flex-col items-center justify-center p-2 sm:p-3"
             >
               <span className="text-base sm:text-xl font-bold text-amber-50 mb-1">
@@ -110,22 +111,22 @@ const BaziChartGrid = ({ four_pillars, language = 'en' }) => {
                   border: `1px solid ${branchColor}60`,
                 }}
               >
-                {branch.element}
+                {localizeElement(branch.element, language)}
               </span>
               {branch.zodiac && (
-                <p className="text-[9px] sm:text-[10px] text-neutral-500">{branch.zodiac}</p>
+                <p className="text-[9px] sm:text-[10px] text-neutral-500">{localizeZodiac(branch.zodiac, language)}</p>
               )}
               {branch.hidden_stems && branch.hidden_stems.length > 0 && (
                 <p
                   className="text-[8px] sm:text-[9px] text-neutral-500 mt-0.5"
-                  title={`${tt.hidden} ${branch.hidden_stems.map(s => `${s.name_cn} (${s.element})`).join(', ')}`}
+                  title={`${tt.hidden} ${branch.hidden_stems.map(s => `${s.name_cn} (${localizeElement(s.element, language)})`).join(', ')}`}
                 >
                   {branch.hidden_stems.map(s => s.name_cn).join('')}
                 </p>
               )}
               {branchTenGod?.name_en && (
                 <p className="text-[9px] sm:text-[10px] text-neutral-400 mt-0.5">
-                  {branchTenGod.name_en}
+                  {localizeNamePair(branchTenGod.name_en, branchTenGod.name_cn, language)}
                 </p>
               )}
             </div>
