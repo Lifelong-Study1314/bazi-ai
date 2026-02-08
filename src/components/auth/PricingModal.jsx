@@ -27,6 +27,7 @@ const labels = {
     subscribe: 'Subscribe Now',
     close: 'Maybe Later',
     login_first: 'Sign in to subscribe',
+    checkout_failed: 'Checkout failed. Please try again.',
   },
   'zh-TW': {
     title: '解鎖完整命理解讀',
@@ -52,6 +53,7 @@ const labels = {
     subscribe: '立即訂閱',
     close: '稍後再說',
     login_first: '請先登入再訂閱',
+    checkout_failed: '結帳失敗，請稍後再試。',
   },
   'zh-CN': {
     title: '解锁完整命理解读',
@@ -77,6 +79,7 @@ const labels = {
     subscribe: '立即订阅',
     close: '稍后再说',
     login_first: '请先登录再订阅',
+    checkout_failed: '结账失败，请稍后再试。',
   },
   ko: {
     title: '전체 사주 분석 잠금 해제',
@@ -102,6 +105,7 @@ const labels = {
     subscribe: '지금 구독',
     close: '나중에',
     login_first: '구독하려면 먼저 로그인하세요',
+    checkout_failed: '결제에 실패했습니다. 다시 시도해 주세요.',
   },
 }
 
@@ -109,10 +113,12 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
   const t = labels[language] || labels.en
   const { isAuthenticated, token } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
   if (!isOpen) return null
 
   const handleSubscribe = async () => {
+    setError(null)
     if (!isAuthenticated) {
       onClose()
       onNeedAuth?.()
@@ -121,9 +127,15 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
     setLoading(true)
     try {
       const { url } = await createCheckoutSession(token)
-      window.location.href = url
+      if (url) {
+        window.location.href = url
+      } else {
+        setError(t.checkout_failed || 'Checkout failed. Please try again.')
+      }
     } catch (err) {
       console.error('Checkout error:', err)
+      const message = err?.response?.data?.detail || err?.message || 'Checkout failed. Please try again.'
+      setError(typeof message === 'string' ? message : 'Checkout failed. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -177,7 +189,11 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
 
         {/* Actions */}
         <div className="px-6 pb-6 space-y-3">
+          {error && (
+            <p className="text-sm text-red-400 text-center" role="alert">{error}</p>
+          )}
           <button
+            type="button"
             onClick={handleSubscribe}
             disabled={loading}
             className="w-full py-3 bg-bazi-gold text-bazi-ink font-bold rounded-lg hover:bg-bazi-gold-soft transition-all duration-200 disabled:opacity-50 shadow-lg"
