@@ -75,7 +75,7 @@ async def create_checkout_session_onetime(user: User) -> str:
         customer=customer_id,
         mode="payment",
         line_items=[{"price": settings.stripe_price_id_onetime, "quantity": 1}],
-        payment_method_types=["wechat_pay", "alipay", "card"],
+        payment_method_types=["wechat_pay", "card"],
         payment_method_options={
             "wechat_pay": {"client": "web"},
         },
