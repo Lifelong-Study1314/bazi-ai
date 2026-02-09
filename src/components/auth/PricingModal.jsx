@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '../../hooks/useAuth'
-import { createCheckoutSession } from '../../api/client'
+import { createCheckoutSession, createCheckoutSessionOnetime } from '../../api/client'
 
 const labels = {
   en: {
@@ -25,6 +25,8 @@ const labels = {
       'Saved History (coming soon)',
     ],
     subscribe: 'Subscribe Now',
+    subscribe_recurring: 'Subscribe (Card, recurring)',
+    pay_once_31: 'Pay once – 31 days (WeChat / Alipay)',
     close: 'Maybe Later',
     login_first: 'Sign in to subscribe',
     checkout_failed: 'Checkout failed. Please try again.',
@@ -51,6 +53,8 @@ const labels = {
       '歷史記錄（即將推出）',
     ],
     subscribe: '立即訂閱',
+    subscribe_recurring: '訂閱（信用卡，月付）',
+    pay_once_31: '一次付款 – 31 天（微信 / 支付寶）',
     close: '稍後再說',
     login_first: '請先登入再訂閱',
     checkout_failed: '結帳失敗，請稍後再試。',
@@ -77,6 +81,8 @@ const labels = {
       '历史记录（即将推出）',
     ],
     subscribe: '立即订阅',
+    subscribe_recurring: '订阅（信用卡，月付）',
+    pay_once_31: '一次付款 – 31 天（微信 / 支付宝）',
     close: '稍后再说',
     login_first: '请先登录再订阅',
     checkout_failed: '结账失败，请稍后再试。',
@@ -103,6 +109,8 @@ const labels = {
       '기록 저장 (출시 예정)',
     ],
     subscribe: '지금 구독',
+    subscribe_recurring: '구독 (카드, 월 결제)',
+    pay_once_31: '일회 결제 – 31일 (위챗 / 알리페이)',
     close: '나중에',
     login_first: '구독하려면 먼저 로그인하세요',
     checkout_failed: '결제에 실패했습니다. 다시 시도해 주세요.',
@@ -117,7 +125,7 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
 
   if (!isOpen) return null
 
-  const handleSubscribe = async () => {
+  const runCheckout = async (createSession) => {
     setError(null)
     if (!isAuthenticated) {
       onClose()
@@ -126,7 +134,7 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
     }
     setLoading(true)
     try {
-      const { url } = await createCheckoutSession(token)
+      const { url } = await createSession(token)
       if (url) {
         window.location.href = url
       } else {
@@ -140,6 +148,9 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
       setLoading(false)
     }
   }
+
+  const handleSubscribeRecurring = () => runCheckout(createCheckoutSession)
+  const handlePayOnce31 = () => runCheckout(createCheckoutSessionOnetime)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
@@ -192,15 +203,36 @@ const PricingModal = ({ isOpen, onClose, language = 'en', onNeedAuth }) => {
           {error && (
             <p className="text-sm text-red-400 text-center" role="alert">{error}</p>
           )}
+          {!isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => { onClose(); onNeedAuth?.() }}
+              className="w-full py-3 bg-bazi-gold text-bazi-ink font-bold rounded-lg hover:bg-bazi-gold-soft transition-all duration-200"
+            >
+              {t.login_first}
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={handleSubscribeRecurring}
+                disabled={loading}
+                className="w-full py-3 bg-bazi-gold text-bazi-ink font-bold rounded-lg hover:bg-bazi-gold-soft transition-all duration-200 disabled:opacity-50 shadow-lg"
+              >
+                {loading ? '...' : t.subscribe_recurring}
+              </button>
+              <button
+                type="button"
+                onClick={handlePayOnce31}
+                disabled={loading}
+                className="w-full py-2.5 border border-bazi-gold/50 text-bazi-gold font-medium rounded-lg hover:bg-bazi-gold/10 transition-all duration-200 disabled:opacity-50"
+              >
+                {t.pay_once_31}
+              </button>
+            </>
+          )}
           <button
             type="button"
-            onClick={handleSubscribe}
-            disabled={loading}
-            className="w-full py-3 bg-bazi-gold text-bazi-ink font-bold rounded-lg hover:bg-bazi-gold-soft transition-all duration-200 disabled:opacity-50 shadow-lg"
-          >
-            {loading ? '...' : !isAuthenticated ? t.login_first : t.subscribe}
-          </button>
-          <button
             onClick={onClose}
             className="w-full py-2 text-sm text-neutral-500 hover:text-amber-200 transition-colors"
           >

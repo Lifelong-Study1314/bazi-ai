@@ -4,6 +4,8 @@ Handles checkout sessions, customer portal, and webhook events.
 """
 
 import logging
+from datetime import datetime, timezone, timedelta
+
 import stripe
 
 from config import get_settings
@@ -21,13 +23,12 @@ def _init_stripe():
 
 async def create_checkout_session(user: User) -> str:
     """
-    Create a Stripe Checkout session for the Premium subscription.
+    Create a Stripe Checkout session for the Premium subscription (recurring, card only).
     Returns the checkout URL.
     """
     _init_stripe()
     settings = get_settings()
 
-    # Create or reuse Stripe customer
     customer_id = user.stripe_customer_id
     if not customer_id:
         customer = stripe.Customer.create(
@@ -35,25 +36,52 @@ async def create_checkout_session(user: User) -> str:
             metadata={"user_id": user.id},
         )
         customer_id = customer.id
-        # Persist the Stripe customer ID
         provider = get_auth_provider()
         await provider.update_stripe_customer_id(user.id, customer_id)
 
-    # WeChat first = default; Alipay omitted until approved in Dashboard
     session = stripe.checkout.Session.create(
         customer=customer_id,
         mode="subscription",
         line_items=[{"price": settings.stripe_price_id, "quantity": 1}],
-        payment_method_types=[
-            "wechat_pay",
-            "card",
-        ],
+        payment_method_types=["card"],
+        success_url=f"{settings.frontend_url}?checkout=success",
+        cancel_url=f"{settings.frontend_url}?checkout=cancel",
+        metadata={"user_id": user.id},
+    )
+    return session.url
+
+
+async def create_checkout_session_onetime(user: User) -> str:
+    """
+    Create a Stripe Checkout session for one-time payment (WeChat Pay, Alipay, card).
+    Grants premium for 31 days. Returns the checkout URL.
+    """
+    _init_stripe()
+    settings = get_settings()
+    if not settings.stripe_price_id_onetime:
+        raise ValueError("STRIPE_PRICE_ID_ONETIME is not configured")
+
+    customer_id = user.stripe_customer_id
+    if not customer_id:
+        customer = stripe.Customer.create(
+            email=user.email,
+            metadata={"user_id": user.id},
+        )
+        customer_id = customer.id
+        provider = get_auth_provider()
+        await provider.update_stripe_customer_id(user.id, customer_id)
+
+    session = stripe.checkout.Session.create(
+        customer=customer_id,
+        mode="payment",
+        line_items=[{"price": settings.stripe_price_id_onetime, "quantity": 1}],
+        payment_method_types=["wechat_pay", "alipay", "card"],
         payment_method_options={
             "wechat_pay": {"client": "web"},
         },
         success_url=f"{settings.frontend_url}?checkout=success",
         cancel_url=f"{settings.frontend_url}?checkout=cancel",
-        metadata={"user_id": user.id},
+        metadata={"user_id": user.id, "onetime": "31"},
     )
     return session.url
 
@@ -94,14 +122,25 @@ async def handle_webhook(payload: bytes, sig_header: str) -> None:
     logger.info(f"Stripe webhook received: {event_type}")
 
     if event_type == "checkout.session.completed":
-        # User completed checkout — upgrade to premium
         user_id = data.get("metadata", {}).get("user_id")
         customer_id = data.get("customer")
+        mode = data.get("mode")
+        onetime = data.get("metadata", {}).get("onetime")
+
         if user_id:
-            await provider.update_user_tier(user_id, SubscriptionTier.PREMIUM)
-            if customer_id:
-                await provider.update_stripe_customer_id(user_id, customer_id)
-            logger.info(f"User {user_id} upgraded to PREMIUM via checkout")
+            if mode == "payment" and onetime == "31":
+                # One-time purchase: premium for 31 days
+                until = (datetime.now(timezone.utc) + timedelta(days=31)).isoformat()
+                await provider.update_premium_until(user_id, until)
+                if customer_id:
+                    await provider.update_stripe_customer_id(user_id, customer_id)
+                logger.info(f"User {user_id} granted premium until {until} (one-time)")
+            else:
+                # Subscription: full premium
+                await provider.update_user_tier(user_id, SubscriptionTier.PREMIUM)
+                if customer_id:
+                    await provider.update_stripe_customer_id(user_id, customer_id)
+                logger.info(f"User {user_id} upgraded to PREMIUM via checkout")
 
     elif event_type == "customer.subscription.deleted":
         # Subscription cancelled — downgrade to free

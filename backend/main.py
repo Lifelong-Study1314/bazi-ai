@@ -32,6 +32,7 @@ from auth.dependencies import set_auth_provider, get_optional_user, get_current_
 from auth.base import User, SubscriptionTier
 from subscriptions.router import router as subscriptions_router
 from subscriptions.content_gate import gate_content, gate_streaming_section
+from subscriptions.feature_flags import get_effective_tier
 
 
 # Configure logging
@@ -254,7 +255,7 @@ async def stream_insights(request: AnalyzeRequest, http_request: Request):
     """Stream BAZI insights (with content gating for free users)"""
     # Resolve user (anonymous = free tier)
     user = await get_optional_user(http_request)
-    tier = user.tier.value if user else "free"
+    tier = get_effective_tier(user) if user else "free"
 
     # Rate limiting
     from subscriptions.rate_limiter import rate_limiter
@@ -393,7 +394,7 @@ async def stream_insights(request: AnalyzeRequest, http_request: Request):
 async def analyze_sync(request: BaziAnalysisRequest, http_request: Request):
     """Non-streaming BAZI analysis (SSE fallback) — with content gating"""
     user = await get_optional_user(http_request)
-    tier = user.tier.value if user else "free"
+    tier = get_effective_tier(user) if user else "free"
 
     from subscriptions.rate_limiter import rate_limiter
     rate_key = user.id if user else (http_request.client.host if http_request.client else "unknown")
@@ -495,7 +496,7 @@ async def compatibility_analysis(request: CompatibilityRequest, http_request: Re
     Content-gated for free users.
     """
     user = await get_optional_user(http_request)
-    tier = user.tier.value if user else "free"
+    tier = get_effective_tier(user) if user else "free"
 
     from subscriptions.rate_limiter import rate_limiter
     rate_key = user.id if user else (http_request.client.host if http_request.client else "unknown")
@@ -600,7 +601,7 @@ async def daily_forecast(request: DailyForecastRequest, http_request: Request):
     Content-gated: free users see a teaser; premium users see everything.
     """
     user = await get_optional_user(http_request)
-    tier = user.tier.value if user else "free"
+    tier = get_effective_tier(user) if user else "free"
 
     # Rate limiting — shares the same daily bucket as other analyses
     from subscriptions.rate_limiter import rate_limiter

@@ -46,6 +46,7 @@ class SupabaseAuthProvider(AuthProvider):
             tier=SubscriptionTier(row.get("tier", "free")),
             stripe_customer_id=row.get("stripe_customer_id"),
             created_at=row.get("created_at", ""),
+            premium_until=row.get("premium_until"),
             birth_date=row.get("birth_date"),
             birth_hour=row.get("birth_hour"),
             gender=row.get("gender"),
@@ -124,6 +125,15 @@ class SupabaseAuthProvider(AuthProvider):
         if not result.data:
             return None
         return self._row_to_user(result.data[0])
+
+    async def update_premium_until(self, user_id: str, premium_until_iso: str) -> User:
+        self.client.table(self.table).update(
+            {"premium_until": premium_until_iso}
+        ).eq("id", user_id).execute()
+        user = await self.get_user_by_id(user_id)
+        if user is None:
+            raise ValueError("User not found")
+        return user
 
     async def update_birth_data(
         self,

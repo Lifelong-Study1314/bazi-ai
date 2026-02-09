@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     tier            TEXT NOT NULL DEFAULT 'free',
     stripe_customer_id TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    premium_until   TIMESTAMPTZ,   -- one-time purchase: premium until this time
     birth_date      TEXT,          -- "YYYY-MM-DD"
     birth_hour      INTEGER,       -- 0-23
     gender          TEXT,          -- "male" / "female"
@@ -78,6 +79,12 @@ CREATE TABLE IF NOT EXISTS public.users (
 -- Index for fast lookup by email (login) and stripe customer (webhook)
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users (email);
 CREATE INDEX IF NOT EXISTS idx_users_stripe ON public.users (stripe_customer_id);
+```
+
+If the table already exists, add the one-time premium column (for WeChat/Alipay 31-day access):
+
+```sql
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMPTZ;
 ```
 
 ### 2.3  Disable Supabase Built-in Auth (We Use Our Own JWT)

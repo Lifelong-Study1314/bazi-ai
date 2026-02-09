@@ -47,6 +47,7 @@ class MockAuthProvider(AuthProvider):
                 ("gender", "TEXT"),
                 ("calendar_type", "TEXT"),
                 ("is_leap_month", "INTEGER"),
+                ("premium_until", "TEXT"),
             ]:
                 try:
                     await db.execute(f"ALTER TABLE users ADD COLUMN {col} {col_type}")
@@ -66,10 +67,10 @@ class MockAuthProvider(AuthProvider):
 
     # Column order for all SELECT queries:
     # 0:id, 1:email, 2:password_hash, 3:name, 4:tier, 5:stripe_customer_id,
-    # 6:created_at, 7:birth_date, 8:birth_hour, 9:gender, 10:calendar_type, 11:is_leap_month
+    # 6:created_at, 7:birth_date, 8:birth_hour, 9:gender, 10:calendar_type, 11:is_leap_month, 12:premium_until
     _SELECT_COLS = (
         "id, email, password_hash, name, tier, stripe_customer_id, created_at, "
-        "birth_date, birth_hour, gender, calendar_type, is_leap_month"
+        "birth_date, birth_hour, gender, calendar_type, is_leap_month, premium_until"
     )
 
     @staticmethod
@@ -86,6 +87,7 @@ class MockAuthProvider(AuthProvider):
             gender=row[9] if len(row) > 9 else None,
             calendar_type=row[10] if len(row) > 10 else None,
             is_leap_month=bool(row[11]) if len(row) > 11 and row[11] is not None else None,
+            premium_until=row[12] if len(row) > 12 and row[12] else None,
         )
 
     # ── AuthProvider interface ─────────────────────────────────
@@ -159,6 +161,15 @@ class MockAuthProvider(AuthProvider):
             )
             row = await cursor.fetchone()
         return self._row_to_user(row) if row else None
+
+    async def update_premium_until(self, user_id: str, premium_until_iso: str) -> User:
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("UPDATE users SET premium_until = ? WHERE id = ?", (premium_until_iso, user_id))
+            await db.commit()
+        user = await self.get_user_by_id(user_id)
+        if user is None:
+            raise ValueError("User not found")
+        return user
 
     async def update_birth_data(
         self,

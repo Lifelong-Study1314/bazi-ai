@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     stripe_secret_key: str = Field(default="", alias="STRIPE_SECRET_KEY")
     stripe_webhook_secret: str = Field(default="", alias="STRIPE_WEBHOOK_SECRET")
     stripe_price_id: str = Field(default="", alias="STRIPE_PRICE_ID")
+    stripe_price_id_onetime: str = Field(default="", alias="STRIPE_PRICE_ID_ONETIME")
 
     # Legacy OpenAI config (for backwards compatibility, maps to DeepSeek)
     openai_model: str = Field(default="gpt-4-turbo-preview", alias="OPENAI_MODEL")

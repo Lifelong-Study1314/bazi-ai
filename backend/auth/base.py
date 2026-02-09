@@ -22,6 +22,8 @@ class User(BaseModel):
     tier: SubscriptionTier = SubscriptionTier.FREE
     stripe_customer_id: Optional[str] = None
     created_at: str  # ISO-8601
+    # One-time purchase: premium until this datetime (ISO-8601); used with WeChat/Alipay
+    premium_until: Optional[str] = None
     # Birth data (persisted so the Daily Forecast tab auto-loads)
     birth_date: Optional[str] = None       # "YYYY-MM-DD" (solar)
     birth_hour: Optional[int] = None       # 0-23
@@ -69,6 +71,11 @@ class AuthProvider(ABC):
     @abstractmethod
     async def get_user_by_stripe_customer_id(self, customer_id: str) -> Optional[User]:
         """Look up a user by their Stripe customer ID."""
+        ...
+
+    @abstractmethod
+    async def update_premium_until(self, user_id: str, premium_until_iso: str) -> User:
+        """Set premium access until the given datetime (ISO-8601); for one-time purchases."""
         ...
 
     @abstractmethod

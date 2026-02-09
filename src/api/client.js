@@ -115,6 +115,14 @@ export const createCheckoutSession = async (token) => {
   return data // { url }
 }
 
+export const createCheckoutSessionOnetime = async (token) => {
+  const url = buildApiUrl('/api/subscribe/checkout-onetime')
+  const res = await fetch(url, { method: 'POST', headers: authHeaders(token) })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.detail || 'Checkout failed')
+  return data // { url }
+}
+
 export const createPortalSession = async (token) => {
   const url = buildApiUrl('/api/subscribe/portal')
   const res = await fetch(url, { method: 'POST', headers: authHeaders(token) })
